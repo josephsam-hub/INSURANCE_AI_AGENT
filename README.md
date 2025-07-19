@@ -1,10 +1,11 @@
-ValuEnable - Multilingual AI Voice Assistant for Insurance Services
-🎤 Made with ❤️ at InsureBot Quest 2025- Hackathon , Conversational Bot
 
-🚀 Project Overview
+**ValuEnable - Multilingual AI Voice Assistant for Insurance Services
+🎤 Made with ❤️ at InsureBot Quest 2025- Hackathon , Conversational Bot**
+
+**🚀 Project Overview**
 ValuEnable is a multilingual AI-powered voice receptionist designed to transform how insurance companies interact with their customers. Whether it's booking appointments, assisting with claims, or answering policy-related queries, this web-based assistant provides a seamless and interactive experience using natural voice conversations in English, Tamil, and Hindi.
 
-👥 Team ValuEnable
+**👥 Team ValuEnable**
 
 👑 Lead: Joseph Sam M (josephsam5934@gmail.com)
 
@@ -12,12 +13,12 @@ ValuEnable is a multilingual AI-powered voice receptionist designed to transform
 
 🛠️ Developer: Rohith (rohithd1000@gmail.com)
 
-🎯 Elevator Pitch
+**🎯 Elevator Pitch**
 With increasing digital transformation in the insurance industry, customer service still remains a critical bottleneck. Our AI assistant bridges this gap by allowing users to talk directly with a virtual agent in their preferred language — no buttons, no forms, just natural conversation.
 
 Built with modern tools like the ElevenLabs convai widget and animated UI feedback, ValuEnable helps users get things done with ease — whether it’s checking policy details or filing claims — all through speech.
 
-🌟 Features
+**🌟 Features**
 ✅ Voice-first AI assistant (microphone activated)
 ✅ Multilingual support: English, Tamil, Hindi
 ✅ Blooming light effect to indicate listening status
@@ -25,7 +26,7 @@ Built with modern tools like the ElevenLabs convai widget and animated UI feedba
 ✅ Fully responsive UI (HTML, CSS, JS)
 ✅ Works entirely in-browser (no backend needed)
 
-🧠 System Architecture
+**🧠 System Architecture**
 
 User interacts with an AI assistant via voice
 
@@ -37,7 +38,7 @@ Natural responses are delivered in a conversational loop
 
 Future enhancement options for backend integration (e.g., Flask API)
 
-📦 File Structure
+**📦 File Structure**
 
 /
 ├── index.html → Main webpage
@@ -46,15 +47,29 @@ Future enhancement options for backend integration (e.g., Flask API)
 ├── README.md → Project overview and details
 └── requirements.txt → Python deps (placeholder for backend)
 
-🛠️ Tech Stack
+**🛠️ Tech Stack**
 
-HTML5, CSS3, JavaScript
+🌐 **Frontend:** HTML5, CSS3, JavaScript,Next.js (TypeScript)
+🤖** AI Models:**
+      **📝 Transcription:** Deepgram Nova 3
+      **🗣️ Voice Generation:** Eleven Labs Turbo
+      **🤯 Conversational AI:** GPT-4.0 Cluster
 
-ElevenLabs convai Widget
-
-Font Awesome
-
-(Optional) Flask backend for future use
-Screenshots :
+**Screenshots :**
 <img width="1347" height="638" alt="image" src="https://github.com/user-attachments/assets/c8784cc9-283d-4869-a34d-b93fc049f533" />
 <img width="1345" height="640" alt="image" src="https://github.com/user-attachments/assets/5b929a3c-91c9-4415-8eef-97b32ca0e68c" />
+
+**🔮 Future Enhancements**
+**🎯 Integrate real-time sentiment analysis**
+Enhance the AI agent's ability to understand customer emotions and respond accordingly.
+
+**🌍 Expand language support for multilingual interactions**
+Implement multilingual capabilities to serve a broader audience.
+
+**🧠 Implement dynamic intent recognition for improved customer service**
+Utilize advanced NLP techniques to enhance AI-driven query resolution.
+
+**📂 Repository & Demo**
+📌 Repo URL: https://github.com/Elan-Rubin/codefest_2025
+🎥 Demo URL: [Insert Live Demo Link]
+🌍 MVP URL :
