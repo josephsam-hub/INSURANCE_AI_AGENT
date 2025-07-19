@@ -59,10 +59,7 @@ HTML5, CSS3, JavaScript,Next.js (TypeScript)
       **🗣️ Voice Generation:** Eleven Labs Turbo
       **🤯 Conversational AI:** GPT-4.0 Cluster
 
-**Screenshots :**
-
-<img width="1347" height="638" alt="image" src="https://github.com/user-attachments/assets/c8784cc9-283d-4869-a34d-b93fc049f533" />
-<img width="1345" height="640" alt="image" src="https://github.com/user-attachments/assets/5b929a3c-91c9-4415-8eef-97b32ca0e68c" />
+**Screenshot**
 
 **🔮 Future Enhancements**
 
@@ -78,6 +75,6 @@ Implement multilingual capabilities to serve a broader audience.
 Utilize advanced NLP techniques to enhance AI-driven query resolution.
 
 **📂 Repository & Demo**
-
-🎥 Demo URL: [Insert Live Demo Link]
-🌍 MVP URL :
+💟 GitHub URL : https://github.com/josephsam-hub/INSURANCE_AI_AGENT
+🎥 Demo URL: https://drive.google.com/drive/folders/1cJAixsKQym-iDi6AkiKjLqU4dkoGFccm
+🌍 MVP URL :https://josephsam-hub.github.io/INSURANCE_AI_AGENT/
