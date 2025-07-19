@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Insurance Voice AI Assistant - Speak with our AI receptionist for instant support on policies, claims, and more." />
+  <title>ValuEnable - Insurance AI Assistant</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>ValuEnable Insurance Assistant</h1>
+    <!-- IT JUST A BOAY OF A WEBSITE SO I MAKE IT AS COMMENT
+    <p>Your smart voice-powered AI receptionist for insurance help</p>
+  </header>
+
+  <nav>
+    <a href="#">Home</a>
+    <a href="#features">Features</a>
+    <a href="#contact">Contact</a>
+  </nav>
+
+  <section class="hero">
+    <h1>Talk to our AI Assistant</h1>
+    <p>Let our virtual receptionist help you with booking requests, insurance claims, policy inquiries, and more.</p>
+  </section>
+
+  <section class="features" id="features">
+    <div class="feature">
+      <i class="fas fa-headset"></i>
+      <h3>Voice-First Support</h3>
+      <p>Speak naturally with our agent and get immediate responses for your queries.</p>
+    </div>
+    <div class="feature">
+      <i class="fas fa-robot"></i>
+      <h3>Smart Booking</h3>
+      <p>AI can schedule appointments, check availability, and more — no forms needed.</p>
+    </div>
+    <div class="feature">
+      <i class="fas fa-shield-alt"></i>
+      <h3>Insurance Expertise</h3>
+      <p>Trained on insurance topics, our agent guides users with clarity and precision.</p>
+    </div>
+  </section> -->
+
+  <section class="ai-section">
+    <h2> conversational voice AI bot </h2>
+     <div class="ai-center">
+    <div class="bloom-sphere" id="bloomSphere">
+      <canvas id="dotsCanvas"></canvas>
+    </div>
+
+    <button id="speakBtn">Start Speaking</button>
+
+    <div style="margin-top: 3rem;">
+      <elevenlabs-convai agent-id="agent_01k0gm17teek7s1cv559fr7306"></elevenlabs-convai>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <p>&copy; 2025 ValuEnable. All rights reserved.</p>
+  </footer>
+
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>
