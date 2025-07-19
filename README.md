@@ -78,6 +78,6 @@ Implement multilingual capabilities to serve a broader audience.
 Utilize advanced NLP techniques to enhance AI-driven query resolution.
 
 **📂 Repository & Demo**
-📌 Repo URL: https://github.com/Elan-Rubin/codefest_2025
+
 🎥 Demo URL: [Insert Live Demo Link]
 🌍 MVP URL :
