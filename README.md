@@ -76,5 +76,7 @@ Utilize advanced NLP techniques to enhance AI-driven query resolution.
 
 **📂 Repository & Demo**
 💟 GitHub URL : https://github.com/josephsam-hub/INSURANCE_AI_AGENT
+
 🎥 Demo URL: https://drive.google.com/drive/folders/1cJAixsKQym-iDi6AkiKjLqU4dkoGFccm
+
 🌍 MVP URL :https://josephsam-hub.github.io/INSURANCE_AI_AGENT/
