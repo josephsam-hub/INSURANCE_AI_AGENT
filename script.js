@@ -1,15 +1,234 @@
-// ------ Glowing Bloom Sphere ------
+// ============ Socket.IO Connection ============
+const socket = io('http://localhost:3000');
+let isConnected = false;
+
+socket.on('connect', () => {
+  console.log('Connected to server');
+  isConnected = true;
+  updateConnectionStatus();
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  isConnected = false;
+  updateConnectionStatus();
+});
+
+socket.on('analytics-update', (data) => {
+  updateAnalyticsDashboard(data);
+});
+
+function updateConnectionStatus() {
+  const statusIndicator = document.querySelector('.sidebar-header h3');
+  if (statusIndicator) {
+    statusIndicator.innerHTML = `<i class="fas fa-brain"></i> Live Call Analytics ${isConnected ? '🟢' : '🔴'}`;
+  }
+}
+
+// ============ Chart.js Charts ============
+let emotionChart, interruptionChart, empathyChart;
+
+function initializeCharts() {
+  // Emotion Timeline Chart
+  const emotionCtx = document.getElementById('emotionChart');
+  if (emotionCtx) {
+    emotionChart = new Chart(emotionCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Emotion Level',
+          data: [],
+          borderColor: '#1af2ff',
+          backgroundColor: 'rgba(26, 242, 255, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 3,
+            ticks: {
+              color: '#888',
+              callback: function(value) {
+                const emotions = ['Neutral', 'Happy', 'Angry', 'Worried'];
+                return emotions[value] || value;
+              }
+            }
+          },
+          x: {
+            ticks: {
+              color: '#888'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Interruption Heatmap Chart
+  const interruptionCtx = document.getElementById('interruptionChart');
+  if (interruptionCtx) {
+    interruptionChart = new Chart(interruptionCtx, {
+      type: 'bar',
+      data: {
+        labels: ['0-30s', '30-60s', '60-90s', '90-120s', '120s+'],
+        datasets: [{
+          label: 'Interruptions',
+          data: [0, 0, 0, 0, 0],
+          backgroundColor: [
+            'rgba(0, 255, 136, 0.8)',
+            'rgba(255, 170, 0, 0.8)',
+            'rgba(255, 68, 68, 0.8)',
+            'rgba(255, 0, 0, 0.8)',
+            'rgba(128, 0, 0, 0.8)'
+          ],
+          borderColor: '#1af2ff',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: '#888'
+            }
+          },
+          x: {
+            ticks: {
+              color: '#888'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Empathy Gauge Chart
+  const empathyCtx = document.getElementById('empathyChart');
+  if (empathyCtx) {
+    empathyChart = new Chart(empathyCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Empathy Score'],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: [
+            '#1af2ff',
+            'rgba(34, 34, 43, 0.3)'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `Empathy: ${context.parsed}%`;
+              }
+            }
+          }
+        },
+        cutout: '70%'
+      }
+    });
+  }
+}
+
+// ============ Analytics Dashboard ============
+function updateAnalyticsDashboard(data) {
+  // Update latency
+  const latencyValue = document.getElementById('latencyValue');
+  const latencyStatus = document.getElementById('latencyStatus');
+  if (latencyValue && data.averageLatency) {
+    const latency = Math.round(data.averageLatency);
+    latencyValue.textContent = `${latency}ms`;
+    latencyStatus.textContent = latency < 500 ? '🟢' : latency < 1000 ? '🟡' : '🔴';
+  }
+
+  // Update emotion
+  const emotionValue = document.getElementById('emotionValue');
+  const emotionStatus = document.getElementById('emotionStatus');
+  if (emotionValue && data.emotion.length > 0) {
+    const latestEmotion = data.emotion[data.emotion.length - 1];
+    emotionValue.textContent = latestEmotion.emotion || 'Neutral';
+    emotionStatus.textContent = getEmotionEmoji(latestEmotion.emotion);
+  }
+
+  // Update empathy
+  const empathyValue = document.getElementById('empathyValue');
+  const empathyStatus = document.getElementById('empathyStatus');
+  if (empathyValue && data.empathy.length > 0) {
+    const latestEmpathy = data.empathy[data.empathy.length - 1];
+    empathyValue.textContent = `${Math.round(latestEmpathy.score)}%`;
+    empathyStatus.textContent = latestEmpathy.score > 70 ? '🟢' : latestEmpathy.score > 40 ? '🟡' : '🔴';
+    
+    // Update empathy gauge
+    if (empathyChart) {
+      empathyChart.data.datasets[0].data = [latestEmpathy.score, 100 - latestEmpathy.score];
+      empathyChart.update('none');
+    }
+  }
+
+  // Update interruptions
+  const interruptionsValue = document.getElementById('interruptionsValue');
+  const interruptionsStatus = document.getElementById('interruptionsStatus');
+  if (interruptionsValue) {
+    interruptionsValue.textContent = data.interruptions || 0;
+    interruptionsStatus.textContent = data.interruptions > 5 ? '🔴' : data.interruptions > 2 ? '🟡' : '🟢';
+  }
+}
+
+function getEmotionEmoji(emotion) {
+  const emojiMap = {
+    'happy': '😊',
+    'angry': '😡',
+    'worried': '😢',
+    'neutral': '😐'
+  };
+  return emojiMap[emotion?.toLowerCase()] || '😐';
+}
+
+// ============ Glowing Bloom Sphere ============
 const canvas = document.getElementById('bloomCanvas');
 const ctx = canvas.getContext('2d');
+
 function resizeCanvas() {
     const size = Math.min(canvas.parentElement.offsetWidth, canvas.parentElement.offsetHeight);
-    canvas.width = size; canvas.height = size;
+    canvas.width = size; 
+    canvas.height = size;
 }
+
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 const dots = [];
 const DOTS_N = 320;
+
 function createDots() {
     dots.length = 0;
     const R = canvas.width / 2 - 16;
@@ -26,6 +245,7 @@ function createDots() {
         });
     }
 }
+
 function animateDots() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let i = 0; i < dots.length; i++) {
@@ -44,27 +264,231 @@ function animateDots() {
     }
     requestAnimationFrame(animateDots);
 }
-resizeCanvas(); createDots(); animateDots();
-window.addEventListener('resize', () => { resizeCanvas(); createDots(); });
 
-// ------ ElevenLabs Widget Floating logic ------
+resizeCanvas(); 
+createDots(); 
+animateDots();
+window.addEventListener('resize', () => { 
+    resizeCanvas(); 
+    createDots(); 
+});
+
+// ============ ElevenLabs Widget Integration ============
 const elWidget = document.getElementById("elevenlabsWidget");
 const elLabel = elWidget.querySelector(".widget-label");
 const elBox = elWidget.querySelector(".widget-box");
 
 elLabel.onclick = () => {
     elWidget.classList.toggle("active");
-    if (elWidget.classList.contains('active')) { elBox.focus(); }
+    if (elWidget.classList.contains('active')) { 
+        elBox.focus(); 
+    }
 };
+
 window.addEventListener('click', e => {
     if (elWidget.classList.contains('active')) {
         if (!elWidget.contains(e.target)) elWidget.classList.remove('active');
     }
 }, true);
 
-// --------- Dynamic Flash Message for Conversation Summary ---------
-const flashSummary = document.getElementById('flash-summary');
+// ============ Conversation Tracking ============
 let conversationSummary = [];
+let currentCallStartTime = null;
+let lastUserMessageTime = null;
+let lastBotResponseTime = null;
+let isBotSpeaking = false;
+let interruptionCount = 0;
+let emotionData = [];
+let interruptionData = [0, 0, 0, 0, 0];
+let callDuration = 0;
+
+// Emotion detection keywords
+const emotionKeywords = {
+  angry: ['angry', 'frustrated', 'mad', 'upset', 'annoyed', 'irritated', 'furious', 'hate', 'terrible'],
+  worried: ['worried', 'concerned', 'anxious', 'nervous', 'stressed', 'scared', 'fearful', 'afraid', 'panic'],
+  happy: ['happy', 'excited', 'pleased', 'satisfied', 'delighted', 'joyful', 'great', 'wonderful', 'amazing']
+};
+
+// Empathy keywords for bot responses
+const empathyKeywords = [
+  'understand', 'care', 'concern', 'sorry', 'help', 'support', 'assist',
+  'empathize', 'feel', 'realize', 'appreciate', 'value', 'important', 'comfort'
+];
+
+function detectEmotion(text) {
+  const lowerText = text.toLowerCase();
+  for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
+    if (keywords.some(keyword => lowerText.includes(keyword))) {
+      return emotion;
+    }
+  }
+  return 'neutral';
+}
+
+function calculateEmpathyScore(text) {
+  const lowerText = text.toLowerCase();
+  const empathyWords = empathyKeywords.filter(word => lowerText.includes(word));
+  const score = Math.min(100, (empathyWords.length / empathyKeywords.length) * 100);
+  return Math.round(score);
+}
+
+function updateEmotionChart(emotion) {
+  if (!emotionChart) return;
+  
+  const emotionLevels = { neutral: 0, happy: 1, angry: 2, worried: 3 };
+  const level = emotionLevels[emotion] || 0;
+  
+  const now = new Date();
+  const timeLabel = now.toLocaleTimeString('en-US', { hour12: false });
+  
+  emotionChart.data.labels.push(timeLabel);
+  emotionChart.data.datasets[0].data.push(level);
+  
+  // Keep only last 10 data points
+  if (emotionChart.data.labels.length > 10) {
+    emotionChart.data.labels.shift();
+    emotionChart.data.datasets[0].data.shift();
+  }
+  
+  emotionChart.update('none');
+}
+
+function updateInterruptionChart() {
+  if (!interruptionChart) return;
+  
+  // Update interruption data based on call duration
+  const durationMinutes = Math.floor(callDuration / 60);
+  const index = Math.min(durationMinutes, 4);
+  interruptionData[index]++;
+  
+  interruptionChart.data.datasets[0].data = interruptionData;
+  interruptionChart.update('none');
+}
+
+function addTimelineItem(speaker, message) {
+  const timelineContainer = document.getElementById('timelineContainer');
+  if (!timelineContainer) return;
+  
+  const timelineItem = document.createElement('div');
+  timelineItem.className = 'timeline-item slide-in';
+  
+  timelineItem.innerHTML = `
+    <div class="timeline-dot ${speaker.toLowerCase()}"></div>
+    <div class="timeline-content">
+      <span class="speaker">${speaker}</span>
+      <span class="message">${message}</span>
+    </div>
+  `;
+  
+  timelineContainer.appendChild(timelineItem);
+  
+  // Auto-scroll to bottom
+  timelineContainer.scrollTop = timelineContainer.scrollHeight;
+  
+  // Remove old items if too many
+  const items = timelineContainer.querySelectorAll('.timeline-item');
+  if (items.length > 20) {
+    items[0].remove();
+  }
+}
+
+function updateCallStatus(status) {
+  const statusDot = document.querySelector('.status-dot');
+  const statusText = document.querySelector('.status-text');
+  
+  if (statusDot && statusText) {
+    statusDot.className = `status-dot ${status}`;
+    statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  }
+}
+
+function observeElevenLabsMessages() {
+    const convai = document.querySelector("elevenlabs-convai");
+    if (!convai) return;
+
+    const waitForShadowAndMessages = () => {
+        if (convai.shadowRoot) {
+            const allDivs = Array.from(convai.shadowRoot.querySelectorAll('div'));
+            const msgList = allDivs.find(container =>
+                container.childElementCount > 1 && Array.from(container.children).every(child=>child.tagName==="DIV")
+            );
+            
+            if (msgList) {
+                let prevMsgs = [];
+                const msgObserver = new MutationObserver(() => {
+                    const items = Array.from(msgList.querySelectorAll('div'));
+                    const allMsgs = items.map(div => div.textContent || "").filter(Boolean);
+                    const newMsgs = allMsgs.slice(prevMsgs.length);
+                    
+                    newMsgs.forEach(rawMsg => {
+                        let who = "AI";
+                        let msg = rawMsg.trim();
+                        
+                        // Heuristic: if first char is > or "User:" or "You:", treat as human, otherwise AI.
+                        if (/^((you|user)[:,\- ]|[?.!'"]?\s?$)/i.test(msg) || msg.length < 80) {
+                            if (conversationSummary.length === 0 || conversationSummary[conversationSummary.length-1].who === "AI") {
+                                who = "Human";
+                                lastUserMessageTime = Date.now();
+                                
+                                // Detect emotion
+                                const emotion = detectEmotion(msg);
+                                if (emotion !== 'neutral') {
+                                    socket.emit('emotion-detected', { emotion, text: msg });
+                                    updateEmotionChart(emotion);
+                                }
+                                
+                                // Check for interruptions
+                                if (isBotSpeaking) {
+                                    interruptionCount++;
+                                    socket.emit('interruption-detected');
+                                    updateInterruptionChart();
+                                }
+                                
+                                addTimelineItem('User', msg);
+                            }
+                        } else {
+                            // AI response
+                            isBotSpeaking = true;
+                            lastBotResponseTime = Date.now();
+                            
+                            // Calculate empathy score
+                            const empathyScore = calculateEmpathyScore(msg);
+                            socket.emit('empathy-score', { score: empathyScore, text: msg });
+                            
+                            // Calculate latency
+                            if (lastUserMessageTime) {
+                                const latency = lastBotResponseTime - lastUserMessageTime;
+                                if (latency > 0 && latency < 10000) { // Reasonable range
+                                    socket.emit('latency-update', latency);
+                                }
+                            }
+                            
+                            // Stop bot speaking after a delay
+                            setTimeout(() => {
+                                isBotSpeaking = false;
+                            }, 3000);
+                            
+                            addTimelineItem('AI', msg);
+                        }
+                        
+                        conversationSummary.push({who, text: msg});
+                        showSummaryFlash();
+                    });
+                    prevMsgs = allMsgs;
+                });
+                msgObserver.observe(msgList, {childList: true, subtree: true});
+                window.__elevenlabsMsgObserver = msgObserver;
+            }
+        } else {
+            setTimeout(waitForShadowAndMessages, 240);
+        }
+    };
+    waitForShadowAndMessages();
+}
+
+// ============ Dynamic Flash Message for Conversation Summary ============
+const flashSummary = document.getElementById('flash-summary');
+
 function showSummaryFlash() {
     if (conversationSummary.length === 0) return;
     flashSummary.innerHTML = `
@@ -81,62 +505,24 @@ function showSummaryFlash() {
         flashSummary.classList.remove('visible');
     }, 6000);
 }
-function observeElevenLabsMessages() {
-    const convai = document.querySelector("elevenlabs-convai");
-    if (!convai) return;
 
-    const waitForShadowAndMessages = () => {
-        if (convai.shadowRoot) {
-            // Try to find the main message container (specific to ElevenLabs)
-            const allDivs = Array.from(convai.shadowRoot.querySelectorAll('div'));
-            const msgList = allDivs.find(container =>
-                // Heuristic: has several immediate children, each a short div, and first is likely a prompt or AI msg
-                container.childElementCount > 1 && Array.from(container.children).every(child=>child.tagName==="DIV")
-            );
-            if (msgList) {
-                let prevMsgs = [];
-                const msgObserver = new MutationObserver(() => {
-                    const items = Array.from(msgList.querySelectorAll('div'));
-                    const allMsgs = items.map(div => div.textContent || "").filter(Boolean);
-                    const newMsgs = allMsgs.slice(prevMsgs.length);
-                    newMsgs.forEach(rawMsg => {
-                        let who = "AI";
-                        let msg = rawMsg.trim();
-                        // Heuristic: if first char is > or "User:" or "You:", treat as human, otherwise AI.
-                        if (/^((you|user)[:,\- ]|[?.!'"]?\s?$)/i.test(msg) || msg.length < 80) {
-                            if (conversationSummary.length === 0 || conversationSummary[conversationSummary.length-1].who === "AI") {
-                                who = "Human";
-                            }
-                        }
-                        conversationSummary.push({who, text: msg});
-                        showSummaryFlash();
-                    });
-                    prevMsgs = allMsgs;
-                });
-                msgObserver.observe(msgList, {childList: true, subtree: true});
-                window.__elevenlabsMsgObserver = msgObserver;
-            }
-        } else {
-            setTimeout(waitForShadowAndMessages, 240);
-        }
-    };
-    waitForShadowAndMessages();
-}
-
-// ------ Start Speaking Button + Mic Sync ------
+// ============ Start Speaking Button + Mic Sync ============
 const speakBtn = document.getElementById('speakBtn');
 let listening = false;
+
 function resetSpeakUI() {
     listening = false;
     speakBtn.classList.remove('active');
     speakBtn.querySelector('span').innerText = "Start Speaking";
     canvas.parentElement.style.boxShadow = "";
     document.body.classList.remove('listening-bg');
+    updateCallStatus('idle');
 }
-// --- ElevenLabs mic state via MutationObserver ---
+
 function observeElevenLabsMic() {
     const convai = document.querySelector("elevenlabs-convai");
     if (!convai) return;
+    
     const tryObserve = () => {
         if (convai.shadowRoot) {
             const micButton = convai.shadowRoot.querySelector('button[aria-label*="record"], button');
@@ -149,6 +535,10 @@ function observeElevenLabsMic() {
                         micButton.classList.contains('active');
                     if (!isMicActive) {
                         resetSpeakUI();
+                        // End call tracking
+                        if (currentCallStartTime) {
+                            endCall();
+                        }
                     }
                 });
                 observer.observe(micButton, { attributes: true, attributeFilter: ['aria-pressed', 'class'], childList: false, subtree: false });
@@ -161,14 +551,82 @@ function observeElevenLabsMic() {
     tryObserve();
 }
 
+function startCall() {
+    currentCallStartTime = Date.now();
+    conversationSummary = [];
+    interruptionCount = 0;
+    emotionData = [];
+    interruptionData = [0, 0, 0, 0, 0];
+    callDuration = 0;
+    
+    // Reset charts
+    if (emotionChart) {
+        emotionChart.data.labels = [];
+        emotionChart.data.datasets[0].data = [];
+        emotionChart.update('none');
+    }
+    
+    if (interruptionChart) {
+        interruptionChart.data.datasets[0].data = [0, 0, 0, 0, 0];
+        interruptionChart.update('none');
+    }
+    
+    // Clear timeline
+    const timelineContainer = document.getElementById('timelineContainer');
+    if (timelineContainer) {
+        timelineContainer.innerHTML = `
+            <div class="timeline-item">
+                <div class="timeline-dot user"></div>
+                <div class="timeline-content">
+                    <span class="speaker">User</span>
+                    <span class="message">Call started</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Hide summary section
+    const summarySection = document.getElementById('summarySection');
+    if (summarySection) {
+        summarySection.style.display = 'none';
+    }
+    
+    updateCallStatus('active');
+    socket.emit('call-started');
+    
+    // Start call duration timer
+    callDurationTimer = setInterval(() => {
+        callDuration = Date.now() - currentCallStartTime;
+    }, 1000);
+}
+
+function endCall() {
+    if (conversationSummary.length > 0) {
+        // Generate call summary
+        generateCallSummary();
+        // Show feedback modal after a delay
+        setTimeout(() => {
+            showFeedbackModal();
+        }, 2000);
+    }
+    
+    if (callDurationTimer) {
+        clearInterval(callDurationTimer);
+    }
+    
+    updateCallStatus('idle');
+    currentCallStartTime = null;
+}
+
 speakBtn.onclick = () => {
     elWidget.classList.add('active');
-    conversationSummary = []; // Clear summary for new session
+    startCall();
     listening = true;
     speakBtn.classList.add('active');
     speakBtn.querySelector('span').innerText = "Listening...";
     canvas.parentElement.style.boxShadow = "0 0 128px 63px #1af2ff98,0 0 32px 15px #ffae0077";
     document.body.classList.add('listening-bg');
+    updateCallStatus('listening');
 
     setTimeout(() => {
         const convai = document.querySelector("elevenlabs-convai");
@@ -180,3 +638,197 @@ speakBtn.onclick = () => {
         observeElevenLabsMessages();
     }, 500);
 };
+
+// ============ Call Summary Generation ============
+async function generateCallSummary() {
+    if (conversationSummary.length === 0) return;
+    
+    const transcript = conversationSummary.map(entry => `${entry.who}: ${entry.text}`).join('\n');
+    
+    try {
+        const response = await fetch('/api/summary', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ transcript })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showSummaryInSidebar(data.summary);
+        } else {
+            console.error('Failed to generate summary');
+        }
+    } catch (error) {
+        console.error('Error generating summary:', error);
+    }
+}
+
+function showSummaryInSidebar(summary) {
+    const summarySection = document.getElementById('summarySection');
+    const summaryContent = document.getElementById('summaryContent');
+    
+    if (summarySection && summaryContent) {
+        summaryContent.innerHTML = `
+            <div class="summary-section">
+                <h4>Customer Name</h4>
+                <p>${summary.customerName || 'Not specified'}</p>
+            </div>
+            <div class="summary-section">
+                <h4>Purpose</h4>
+                <p>${summary.purpose || 'General inquiry'}</p>
+            </div>
+            <div class="summary-section">
+                <h4>Key Points</h4>
+                <ul>
+                    ${(summary.keyPoints || []).map(point => `<li>${point}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="summary-section">
+                <h4>Sentiment</h4>
+                <p>${summary.sentiment || 'Neutral'}</p>
+            </div>
+            <div class="summary-section">
+                <h4>Action Items</h4>
+                <ul>
+                    ${(summary.actionItems || []).map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="summary-section">
+                <h4>Risk Level</h4>
+                <p>${summary.riskLevel || 'Low'}</p>
+            </div>
+        `;
+        
+        summarySection.style.display = 'block';
+    }
+}
+
+// Copy summary functionality
+document.getElementById('copySummary')?.addEventListener('click', () => {
+    const summaryContent = document.getElementById('summaryContent');
+    if (summaryContent) {
+        navigator.clipboard.writeText(summaryContent.textContent).then(() => {
+            // Show success message
+            const button = document.getElementById('copySummary');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+            }, 2000);
+        });
+    }
+});
+
+// ============ Summary Modal ============
+const summaryModal = document.getElementById('summaryModal');
+const closeSummaryModal = document.getElementById('closeSummaryModal');
+
+closeSummaryModal?.addEventListener('click', () => {
+    summaryModal.classList.remove('active');
+});
+
+summaryModal?.addEventListener('click', (e) => {
+    if (e.target === summaryModal) {
+        summaryModal.classList.remove('active');
+    }
+});
+
+// ============ Feedback Modal ============
+const feedbackModal = document.getElementById('feedbackModal');
+const closeFeedbackModal = document.getElementById('closeFeedbackModal');
+const ratingStars = document.querySelectorAll('.rating-stars i');
+const submitFeedback = document.getElementById('submitFeedback');
+let selectedRating = 0;
+
+function showFeedbackModal() {
+    feedbackModal.classList.add('active');
+}
+
+closeFeedbackModal?.addEventListener('click', () => {
+    feedbackModal.classList.remove('active');
+});
+
+feedbackModal?.addEventListener('click', (e) => {
+    if (e.target === feedbackModal) {
+        feedbackModal.classList.remove('active');
+    }
+});
+
+ratingStars.forEach(star => {
+    star.addEventListener('click', () => {
+        const rating = parseInt(star.dataset.rating);
+        selectedRating = rating;
+        
+        ratingStars.forEach((s, index) => {
+            if (index < rating) {
+                s.classList.add('selected');
+            } else {
+                s.classList.remove('selected');
+            }
+        });
+    });
+    
+    star.addEventListener('mouseenter', () => {
+        const rating = parseInt(star.dataset.rating);
+        ratingStars.forEach((s, index) => {
+            if (index < rating) {
+                s.classList.add('active');
+            } else {
+                s.classList.remove('active');
+            }
+        });
+    });
+    
+    star.addEventListener('mouseleave', () => {
+        ratingStars.forEach(s => s.classList.remove('active'));
+    });
+});
+
+submitFeedback?.addEventListener('click', () => {
+    const comment = document.getElementById('feedbackComment').value;
+    
+    console.log('Feedback submitted:', {
+        rating: selectedRating,
+        comment: comment,
+        timestamp: new Date().toISOString(),
+        callDuration: currentCallStartTime ? Date.now() - currentCallStartTime : 0,
+        interruptions: interruptionCount
+    });
+    
+    // Reset form
+    selectedRating = 0;
+    ratingStars.forEach(s => s.classList.remove('selected'));
+    document.getElementById('feedbackComment').value = '';
+    
+    // Close modal
+    feedbackModal.classList.remove('active');
+    
+    // Show thank you message
+    showThankYouMessage();
+});
+
+function showThankYouMessage() {
+    const thankYou = document.createElement('div');
+    thankYou.className = 'flash-summary visible';
+    thankYou.innerHTML = '<b>Thank you for your feedback!</b><br>Your response helps us improve InsureBot Pulse.';
+    thankYou.style.position = 'fixed';
+    thankYou.style.top = '24px';
+    thankYou.style.left = '50%';
+    thankYou.style.transform = 'translateX(-50%)';
+    thankYou.style.zIndex = '2000';
+    
+    document.body.appendChild(thankYou);
+    
+    setTimeout(() => {
+        thankYou.remove();
+    }, 3000);
+}
+
+// ============ Initialize ============
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('InsureBot Pulse initialized');
+    updateConnectionStatus();
+    initializeCharts();
+});
