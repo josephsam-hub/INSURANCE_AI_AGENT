@@ -1,43 +1,29 @@
 @echo off
-echo.
-echo ========================================
-echo    InsureBot Pulse - AI Insurance Agent
-echo ========================================
-echo.
-echo Starting server...
-echo.
+echo 🚀 InsureBot Pulse - Deployment Script
+echo ======================================
 
-REM Check if Node.js is installed
-node --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: Node.js is not installed!
-    echo Please install Node.js from https://nodejs.org/
-    pause
-    exit /b 1
+echo.
+echo 📦 Installing dependencies...
+npm install
+
+echo.
+echo 🔧 Setting up environment...
+if not exist .env (
+    echo Creating .env file...
+    echo # InsureBot Pulse Environment Variables > .env
+    echo GROQ_API_KEY=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 >> .env
+    echo PORT=3000 >> .env
+    echo ✅ .env file created with Groq API key
+) else (
+    echo ✅ .env file already exists
 )
 
-REM Check if .env file exists
-if not exist ".env" (
-    echo WARNING: .env file not found!
-    echo Please copy env.example to .env and add your API keys
-    echo.
-    copy env.example .env
-    echo Created .env file. Please edit it with your API keys.
-    echo.
-)
-
-REM Install dependencies if node_modules doesn't exist
-if not exist "node_modules" (
-    echo Installing dependencies...
-    npm install
-    echo.
-)
-
-REM Start the server
-echo Starting InsureBot Pulse...
 echo.
-echo Open your browser to: http://localhost:3000
+echo 🎯 Starting InsureBot Pulse...
+echo 📊 Server will be available at: http://localhost:3000
+echo 🎤 ElevenLabs Voice Agent: agent_2301k1xsr90ye6psdrdp5s1xy15w
 echo.
 echo Press Ctrl+C to stop the server
 echo.
+
 npm start 
