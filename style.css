@@ -1712,12 +1712,7 @@ body.listening-bg footer {
     transform: translate(-50%, -50%) scale(0);
      
   }
-  50% {
-    opacity: 0.5;
-    /* Debug - make waves more visible */
-    background: rgba(255, 255, 0, 0.4);
-    border: 4px solid rgb(25, 0, 255);
-  }
+   
   100% {
     width: 600px;
     height: 600px;
