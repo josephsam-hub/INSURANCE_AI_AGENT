@@ -11,6 +11,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- Analytics Toggle Bar (when closed) -->
+  <div class="analytics-toggle-bar" id="analyticsToggleBar">
+    <button class="analytics-open" id="openAnalytics" aria-label="Open Analytics">
+      <i class="fas fa-chart-bar"></i>
+      <span>Analytics</span>
+    </button>
+  </div>
+
   <!-- Left-Side Analytics Dashboard -->
   <div class="analytics-sidebar" id="analyticsSidebar">
     <div class="sidebar-header">
@@ -19,6 +27,9 @@
         <span class="status-dot"></span>
         <span class="status-text">Idle</span>
       </div>
+      <button class="analytics-close" id="closeAnalytics" aria-label="Close Analytics">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
     
     <div class="sidebar-content">
@@ -43,7 +54,7 @@
         </div>
         
         <div class="metric-card">
-          <div class="metric-icon">🎚️</div>
+          <div class="metric-icon">🎚</div>
           <div class="metric-info">
             <span class="metric-label">Empathy</span>
             <span class="metric-value" id="empathyValue">0%</span>
@@ -200,8 +211,17 @@
       </div>
       <div class="widget-box">
         <!-- ElevenLabs Conversational Widget -->
-        <elevenlabs-convai agent-id="agent_5601k21xr3a5e22rz1r88srshgn2"></elevenlabs-convai>
+        <elevenlabs-convai agent-id="agent_01k0k42wczf7ravzr0gmvsqbfn"></elevenlabs-convai>
       </div>
+    </div>
+
+
+
+    <!-- 🌊 Flow Waves Animation -->
+    <div class="flow-waves-container">
+        <div class="flow-wave"></div>
+        <div class="flow-wave"></div>
+        <div class="flow-wave"></div>
     </div>
 
     <footer> &copy; 2025 ValuEnable. All rights reserved. </footer>
