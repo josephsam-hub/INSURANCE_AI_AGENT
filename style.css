@@ -1697,9 +1697,7 @@ body.listening-bg footer {
   border: 2px solid rgba(0, 255, 255, 0.3);
   border-radius: 50%;
   animation: flowWave 3s infinite;
-  /* Debug styles - remove after fixing */
-  background: rgba(255, 255, 0, 0.2);
-  border: 3px solid yellow;
+   
 }
 
 .flow-wave:nth-child(1) { animation-delay: 0s; }
