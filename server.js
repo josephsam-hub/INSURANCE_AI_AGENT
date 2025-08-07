@@ -31,7 +31,10 @@ const analyticsData = {
   empathy: [],
   interruptions: 0,
   totalCalls: 0,
-  averageLatency: 0
+  averageLatency: 0,
+  minLatency: 0,
+  maxLatency: 0,
+  latencyCount: 0
 };
 
 // Emotion detection keywords
@@ -56,8 +59,32 @@ io.on('connection', (socket) => {
   
   // Handle real-time analytics updates
   socket.on('latency-update', (data) => {
-    analyticsData.latency.push(data);
-    analyticsData.averageLatency = analyticsData.latency.reduce((a, b) => a + b, 0) / analyticsData.latency.length;
+    // Handle both old format (number) and new format (object)
+    const latencyValue = typeof data === 'number' ? data : data.latency;
+    const latencyData = {
+      latency: latencyValue,
+      timestamp: typeof data === 'number' ? Date.now() : data.timestamp,
+      userSpeechEnd: typeof data === 'number' ? null : data.userSpeechEnd,
+      botResponseStart: typeof data === 'number' ? null : data.botResponseStart
+    };
+    
+    analyticsData.latency.push(latencyData);
+    
+    // Keep only last 100 measurements
+    if (analyticsData.latency.length > 100) {
+      analyticsData.latency.shift();
+    }
+    
+    // Calculate average latency
+    analyticsData.averageLatency = analyticsData.latency.reduce((sum, item) => sum + item.latency, 0) / analyticsData.latency.length;
+    
+    // Calculate additional statistics
+    const latencies = analyticsData.latency.map(item => item.latency);
+    analyticsData.minLatency = Math.min(...latencies);
+    analyticsData.maxLatency = Math.max(...latencies);
+    analyticsData.latencyCount = analyticsData.latency.length;
+    
+    console.log(`📊 Latency update: ${latencyValue}ms (avg: ${Math.round(analyticsData.averageLatency)}ms)`);
     io.emit('analytics-update', analyticsData);
   });
   
