@@ -1677,11 +1677,14 @@ body.listening-bg footer {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 999;
+  z-index: 9999;
   pointer-events: none;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  /* Debug styles - remove after fixing */
+  background: rgba(255, 0, 0, 0.1);
+  border: 2px solid red;
 }
 
 .flow-wave {
@@ -1694,6 +1697,9 @@ body.listening-bg footer {
   border: 2px solid rgba(0, 255, 255, 0.3);
   border-radius: 50%;
   animation: flowWave 3s infinite;
+  /* Debug styles - remove after fixing */
+  background: rgba(255, 255, 0, 0.2);
+  border: 3px solid yellow;
 }
 
 .flow-wave:nth-child(1) { animation-delay: 0s; }
@@ -1706,15 +1712,24 @@ body.listening-bg footer {
     height: 0;
     opacity: 1;
     transform: translate(-50%, -50%) scale(0);
+    /* Debug - make waves more visible */
+    background: rgba(255, 255, 0, 0.8);
+    border: 4px solid yellow;
   }
   50% {
     opacity: 0.5;
+    /* Debug - make waves more visible */
+    background: rgba(255, 255, 0, 0.4);
+    border: 4px solid orange;
   }
   100% {
     width: 600px;
     height: 600px;
     opacity: 0;
     transform: translate(-50%, -50%) scale(3);
+    /* Debug - make waves more visible */
+    background: rgba(255, 255, 0, 0.1);
+    border: 4px solid red;
   }
 }
 
