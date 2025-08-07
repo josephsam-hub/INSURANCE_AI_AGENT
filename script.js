@@ -210,13 +210,30 @@ function initializeCharts() {
 function updateAnalyticsDashboard(data) {
   console.log('📊 Updating analytics dashboard:', data);
   
-  // Update latency
+  // Update latency with enhanced data
   const latencyValue = document.getElementById('latencyValue');
   const latencyStatus = document.getElementById('latencyStatus');
-  if (latencyValue && data.averageLatency) {
+  if (latencyValue && data.averageLatency !== undefined) {
     const latency = Math.round(data.averageLatency);
     latencyValue.textContent = `${latency}ms`;
-    latencyStatus.textContent = latency < 500 ? '🟢' : latency < 1000 ? '🟡' : '🔴';
+    
+    // Enhanced color-coded status with detailed feedback
+    if (latency < 300) {
+      latencyStatus.textContent = '🟢';
+      latencyStatus.className = 'metric-status latency-excellent';
+    } else if (latency < 500) {
+      latencyStatus.textContent = '🟡';
+      latencyStatus.className = 'metric-status latency-good';
+    } else {
+      latencyStatus.textContent = '🔴';
+      latencyStatus.className = 'metric-status latency-poor';
+    }
+    
+    // Add tooltip with detailed stats if available
+    if (data.latencyCount > 0) {
+      const stats = `Avg: ${latency}ms\nMin: ${data.minLatency || 0}ms\nMax: ${data.maxLatency || 0}ms\nCount: ${data.latencyCount}`;
+      latencyValue.title = stats;
+    }
   }
 
   // Update emotion
@@ -350,6 +367,14 @@ let interruptionCount = 0;
 let emotionData = [];
 let interruptionData = [0, 0, 0, 0, 0];
 let callDuration = 0;
+
+// Enhanced Latency Tracking Variables
+let userSpeechEndTime = null;
+let botResponseStartTime = null;
+let latencyHistory = [];
+let currentLatency = 0;
+let isMeasuringLatency = false;
+let latencyMeasurementStart = null;
 
 // Enhanced Emotion Detection Keywords with more sophisticated patterns
 const emotionKeywords = {
@@ -1077,6 +1102,9 @@ function observeElevenLabsMessages() {
                                 who = "Human";
                                 lastUserMessageTime = Date.now();
                                 
+                                // Enhanced latency tracking - mark user speech end
+                                markUserSpeechEnd();
+                                
                                 // Enhanced emotion detection with real-time adaptation
                                 const emotion = detectEmotion(msg);
                                 const emotionConfidence = getEmotionConfidence(msg, emotion);
@@ -1103,6 +1131,8 @@ function observeElevenLabsMessages() {
                                         socket.emit('interruption-detected');
                                     }
                                     updateInterruptionChart();
+                                    
+
                                 }
                                 
                                 addTimelineItem('User', msg);
@@ -1112,9 +1142,14 @@ function observeElevenLabsMessages() {
                             isBotSpeaking = true;
                             lastBotResponseTime = Date.now();
                             
+                            // Enhanced latency tracking - mark bot response start
+                            markBotResponseStart();
+                            
+
+                            
                             // Enhanced empathy analysis
                             const empathyAnalysis = analyzeResponseEmpathy(msg);
-                            if (socket && isConnected) {
+                                    if (socket && isConnected) {
                                 socket.emit('empathy-score', { 
                                     score: empathyAnalysis.empathyScore, 
                                     text: msg,
@@ -1124,16 +1159,6 @@ function observeElevenLabsMessages() {
                             
                             // Update empathy display with detailed analysis
                             updateEmpathyDisplay(empathyAnalysis);
-                            
-                            // Calculate latency
-                            if (lastUserMessageTime) {
-                                const latency = lastBotResponseTime - lastUserMessageTime;
-                                if (latency > 0 && latency < 10000) { // Reasonable range
-                                    if (socket && isConnected) {
-                                        socket.emit('latency-update', latency);
-                                    }
-                                }
-                            }
                             
                             // Stop bot speaking after a delay
                             setTimeout(() => {
@@ -1182,6 +1207,85 @@ function showSummaryFlash() {
 const speakBtn = document.getElementById('speakBtn');
 let listening = false;
 
+// Connect "Start Speaking" button to ElevenLabs widget
+speakBtn.addEventListener('click', function() {
+  console.log('🎤 Speak button clicked - attempting to activate ElevenLabs widget');
+  
+
+  
+  // Method 1: Try to find the widget
+  const widget = document.querySelector('elevenlabs-convai');
+  if (!widget) {
+    console.log('❌ ElevenLabs widget not found');
+    showFlashMessage('ElevenLabs widget not loaded. Please refresh the page.', 'error');
+    return;
+  }
+
+  // Method 2: Try to open the widget
+  if (typeof widget.open === 'function') {
+    console.log('✅ Using widget.open() method');
+    widget.open();
+    return;
+  }
+
+  // Method 3: Try to show the widget
+  if (typeof widget.show === 'function') {
+    console.log('✅ Using widget.show() method');
+    widget.show();
+    return;
+  }
+
+  // Method 4: Try to start the widget
+  if (typeof widget.start === 'function') {
+    console.log('✅ Using widget.start() method');
+    widget.start();
+    return;
+  }
+
+  // Method 5: Try to click the widget itself
+  console.log('🔄 Trying to click widget directly');
+  widget.click();
+
+  // Method 6: Wait for shadow root and find mic button
+  setTimeout(() => {
+    if (widget.shadowRoot) {
+      const micButton = widget.shadowRoot.querySelector('button[aria-label*="record"], button[aria-label*="mic"], button[aria-label*="start"], button[aria-label*="listen"]');
+      if (micButton) {
+        console.log('✅ Found mic button in shadow root');
+        micButton.click();
+        return;
+      }
+    }
+
+    // Method 7: Try to find any button in the widget
+    const anyButton = widget.querySelector('button') || widget.shadowRoot?.querySelector('button');
+    if (anyButton) {
+      console.log('✅ Found generic button in widget');
+      anyButton.click();
+      return;
+    }
+
+    // Method 8: Try to dispatch a custom event
+    console.log('🔄 Dispatching custom event to widget');
+    widget.dispatchEvent(new CustomEvent('activate', { bubbles: true }));
+    
+    // Method 9: Try to focus the widget
+    widget.focus();
+    
+    console.log('⚠️ All methods attempted. Widget may need manual activation.');
+    showFlashMessage('Please click the chat widget to start speaking.', 'info');
+  }, 500);
+});
+
+// Helper function to show flash messages
+function showFlashMessage(message, type = 'info') {
+  const flashSummary = document.getElementById('flash-summary');
+  flashSummary.textContent = message;
+  flashSummary.className = `flash-summary ${type}`;
+  flashSummary.classList.add('visible');
+  setTimeout(() => flashSummary.classList.remove('visible'), 3000);
+}
+
 function resetSpeakUI() {
     listening = false;
     speakBtn.classList.remove('active');
@@ -1205,7 +1309,12 @@ function observeElevenLabsMic() {
                     const isMicActive = ariaPressed === "true" ||
                         micText.includes("stop") ||
                         micButton.classList.contains('active');
-                    if (!isMicActive) {
+                    
+                    if (isMicActive) {
+                        // User started speaking - start latency measurement
+                        startLatencyMeasurement();
+                        console.log('🎤 User started speaking - latency measurement initiated');
+                    } else {
                         resetSpeakUI();
                         // End call tracking
                         if (currentCallStartTime) {
@@ -1230,6 +1339,9 @@ function startCall() {
     emotionData = [];
     interruptionData = [0, 0, 0, 0, 0];
     callDuration = 0;
+    
+    // Reset enhanced latency tracking
+    resetLatencyTracking();
     
     // Reset charts
     if (emotionChart) {
@@ -1287,6 +1399,8 @@ function endCall() {
     if (callDurationTimer) {
         clearInterval(callDurationTimer);
     }
+    
+    
     
     updateCallStatus('idle');
     currentCallStartTime = null;
@@ -1500,12 +1614,236 @@ function showThankYouMessage() {
     }, 3000);
 }
 
+// ============ Enhanced Latency Tracking Functions ============
+
+/**
+ * Start measuring latency when user begins speaking
+ */
+function startLatencyMeasurement() {
+    if (!isMeasuringLatency) {
+        isMeasuringLatency = true;
+        latencyMeasurementStart = performance.now();
+        console.log('⏱️ Started latency measurement');
+    }
+}
+
+/**
+ * Mark when user speech ends and start waiting for bot response
+ */
+function markUserSpeechEnd() {
+    if (isMeasuringLatency) {
+        userSpeechEndTime = performance.now();
+        console.log('🎤 User speech ended, waiting for bot response...');
+    }
+}
+
+/**
+ * Mark when bot response starts and calculate latency
+ */
+function markBotResponseStart() {
+    if (isMeasuringLatency && userSpeechEndTime) {
+        botResponseStartTime = performance.now();
+        const latency = Math.round(botResponseStartTime - userSpeechEndTime);
+        
+        // Validate latency is reasonable (between 50ms and 10 seconds)
+        if (latency >= 50 && latency <= 10000) {
+            currentLatency = latency;
+            latencyHistory.push(latency);
+            
+            // Keep only last 50 measurements
+            if (latencyHistory.length > 50) {
+                latencyHistory.shift();
+            }
+            
+            console.log(`⚡ Latency measured: ${latency}ms`);
+            
+            // Emit to server via Socket.IO
+            if (socket && isConnected) {
+                socket.emit('latency-update', {
+                    latency: latency,
+                    timestamp: Date.now(),
+                    userSpeechEnd: userSpeechEndTime,
+                    botResponseStart: botResponseStartTime
+                });
+            }
+            
+            // Update UI with enhanced feedback
+            updateLatencyDisplay(latency);
+            
+            // Reset measurement
+            isMeasuringLatency = false;
+            userSpeechEndTime = null;
+            botResponseStartTime = null;
+        } else {
+            console.log(`⚠️ Invalid latency measurement: ${latency}ms, ignoring`);
+        }
+    }
+}
+
+/**
+ * Update latency display with color-coded feedback and animations
+ */
+function updateLatencyDisplay(latency) {
+    const latencyValue = document.getElementById('latencyValue');
+    const latencyStatus = document.getElementById('latencyStatus');
+    
+    if (latencyValue && latencyStatus) {
+        // Update value with smooth animation
+        latencyValue.style.transition = 'all 0.3s ease';
+        latencyValue.textContent = `${latency}ms`;
+        
+        // Color-coded status with emojis
+        let statusText, statusColor, statusClass;
+        
+        if (latency < 300) {
+            statusText = '🟢';
+            statusColor = '#4CAF50';
+            statusClass = 'latency-excellent';
+        } else if (latency < 500) {
+            statusText = '🟡';
+            statusColor = '#FF9800';
+            statusClass = 'latency-good';
+        } else {
+            statusText = '🔴';
+            statusColor = '#F44336';
+            statusClass = 'latency-poor';
+        }
+        
+        latencyStatus.textContent = statusText;
+        latencyStatus.style.color = statusColor;
+        
+        // Add pulse animation for poor latency
+        if (latency >= 500) {
+            latencyStatus.classList.add('latency-pulse');
+            setTimeout(() => {
+                latencyStatus.classList.remove('latency-pulse');
+            }, 2000);
+        }
+        
+        // Add flash effect for excellent latency
+        if (latency < 300) {
+            latencyValue.classList.add('latency-flash');
+            setTimeout(() => {
+                latencyValue.classList.remove('latency-flash');
+            }, 1000);
+        }
+        
+        // Update average latency if we have history
+        if (latencyHistory.length > 0) {
+            const averageLatency = Math.round(
+                latencyHistory.reduce((a, b) => a + b, 0) / latencyHistory.length
+            );
+            console.log(`📊 Average latency: ${averageLatency}ms (${latencyHistory.length} measurements)`);
+        }
+    }
+}
+
+/**
+ * Get current latency statistics
+ */
+function getLatencyStats() {
+    if (latencyHistory.length === 0) {
+        return {
+            current: 0,
+            average: 0,
+            min: 0,
+            max: 0,
+            count: 0
+        };
+    }
+    
+    return {
+        current: currentLatency,
+        average: Math.round(latencyHistory.reduce((a, b) => a + b, 0) / latencyHistory.length),
+        min: Math.min(...latencyHistory),
+        max: Math.max(...latencyHistory),
+        count: latencyHistory.length
+    };
+}
+
+/**
+ * Reset latency tracking
+ */
+function resetLatencyTracking() {
+    latencyHistory = [];
+    currentLatency = 0;
+    isMeasuringLatency = false;
+    userSpeechEndTime = null;
+    botResponseStartTime = null;
+    latencyMeasurementStart = null;
+    
+    const latencyValue = document.getElementById('latencyValue');
+    const latencyStatus = document.getElementById('latencyStatus');
+    
+    if (latencyValue) latencyValue.textContent = '0ms';
+    if (latencyStatus) latencyStatus.textContent = '🟢';
+    
+    console.log('🔄 Latency tracking reset');
+}
+
 // ============ Initialize ============
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 InsureBot Pulse initialized');
     initializeSocket();
     updateConnectionStatus();
     initializeCharts();
+    
+    // Initialize Analytics Controls
+    const closeAnalyticsBtn = document.getElementById('closeAnalytics');
+    const analyticsSidebar = document.getElementById('analyticsSidebar');
+    const analyticsToggleBar = document.getElementById('analyticsToggleBar');
+    const openAnalyticsBtn = document.getElementById('openAnalytics');
+    
+    console.log('🔍 Analytics elements found:', {
+        closeBtn: !!closeAnalyticsBtn,
+        sidebar: !!analyticsSidebar,
+        toggleBar: !!analyticsToggleBar,
+        openBtn: !!openAnalyticsBtn
+    });
+    
+    // Debug: Check initial state
+    if (analyticsSidebar) {
+        console.log('📊 Sidebar initial classes:', analyticsSidebar.className);
+        console.log('📊 Sidebar collapsed state:', analyticsSidebar.classList.contains('collapsed'));
+    }
+    
+    if (analyticsToggleBar) {
+        console.log('📊 Toggle bar initial classes:', analyticsToggleBar.className);
+        console.log('📊 Toggle bar visible state:', analyticsToggleBar.classList.contains('visible'));
+    }
+    
+          // Analytics Close Button Functionality
+      if (closeAnalyticsBtn && analyticsSidebar) {
+        closeAnalyticsBtn.addEventListener('click', function() {
+          console.log('🔴 Close analytics clicked');
+          analyticsSidebar.classList.add('collapsed');
+          showFlashMessage('📊 Analytics panel closed', 'info');
+          console.log('📊 Analytics panel closed');
+          console.log('📊 Sidebar classes after close:', analyticsSidebar.className);
+          
+          // Show toggle bar after collapse animation
+          setTimeout(() => {
+            if (analyticsToggleBar) {
+              analyticsToggleBar.classList.add('visible');
+              console.log('📊 Toggle bar made visible');
+              console.log('📊 Toggle bar classes after show:', analyticsToggleBar.className);
+            }
+          }, 300);
+        });
+      }
+    
+          // Analytics Toggle Bar Functionality
+      if (analyticsToggleBar && openAnalyticsBtn && analyticsSidebar) {
+        openAnalyticsBtn.addEventListener('click', function() {
+          console.log('🟢 Open analytics clicked');
+          analyticsSidebar.classList.remove('collapsed');
+          analyticsToggleBar.classList.remove('visible');
+          showFlashMessage('📊 Analytics panel opened', 'success');
+          console.log('📊 Analytics panel opened');
+          console.log('📊 Sidebar classes after open:', analyticsSidebar.className);
+          console.log('📊 Toggle bar classes after hide:', analyticsToggleBar.className);
+        });
+      }
     
     // Add comprehensive demo data to show all three visualizations working
     setTimeout(() => {
@@ -1590,3 +1928,390 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 5000); // Update every 5 seconds
 });
+
+// ============ Smart Suggestion System ============
+class SuggestionManager {
+  constructor() {
+    this.suggestions = [];
+    this.activeSuggestions = [];
+    this.suggestionContainer = null;
+    this.emotionHistory = [];
+    this.userFeedback = {};
+    this.init();
+  }
+
+  init() {
+    this.createSuggestionContainer();
+    this.loadSuggestions();
+    this.startAutoDismissTimer();
+  }
+
+  createSuggestionContainer() {
+    this.suggestionContainer = document.createElement('div');
+    this.suggestionContainer.id = 'suggestion-container';
+    this.suggestionContainer.className = 'suggestion-container';
+    document.body.appendChild(this.suggestionContainer);
+  }
+
+  loadSuggestions() {
+    this.suggestions = [
+      {
+        id: 'voice-mode',
+        text: '🎤 Enable voice mode for hands-free interaction',
+        category: 'accessibility',
+        confidence: 0.9,
+        emotion: 'neutral'
+      },
+      {
+        id: 'emotion-insights',
+        text: '📊 View real-time emotion analytics',
+        category: 'analytics',
+        confidence: 0.8,
+        emotion: 'curious'
+      },
+      {
+        id: 'quick-claim',
+        text: '⚡ Start a quick claim process',
+        category: 'action',
+        confidence: 0.7,
+        emotion: 'urgent'
+      },
+      {
+        id: 'policy-review',
+        text: '📋 Review your current policies',
+        category: 'information',
+        confidence: 0.6,
+        emotion: 'neutral'
+      },
+      {
+        id: 'calm-support',
+        text: '🧘 Need help? I\'m here to assist calmly',
+        category: 'support',
+        confidence: 0.9,
+        emotion: 'frustrated'
+      },
+      {
+        id: 'explain-simple',
+        text: '💡 Let me explain this in simpler terms',
+        category: 'support',
+        confidence: 0.8,
+        emotion: 'confused'
+      },
+      {
+        id: 'positive-feedback',
+        text: '🌟 Great! Would you like to explore more features?',
+        category: 'engagement',
+        confidence: 0.7,
+        emotion: 'happy'
+      }
+    ];
+  }
+
+  detectEmotionFromActivity() {
+    // Analyze recent user activity to determine emotion
+    const recentEmotions = this.emotionHistory.slice(-3);
+    if (recentEmotions.length === 0) return 'neutral';
+    
+    const emotionCounts = {};
+    recentEmotions.forEach(emotion => {
+      emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+    });
+    
+    return Object.keys(emotionCounts).reduce((a, b) => 
+      emotionCounts[a] > emotionCounts[b] ? a : b
+    );
+  }
+
+  getRelevantSuggestions(emotion = 'neutral', limit = 3) {
+    const relevantSuggestions = this.suggestions.filter(suggestion => {
+      // Filter by emotion match or neutral suggestions
+      return suggestion.emotion === emotion || suggestion.emotion === 'neutral';
+    });
+
+    // Sort by confidence and relevance
+    relevantSuggestions.sort((a, b) => b.confidence - a.confidence);
+
+    // Remove duplicates and similar suggestions
+    const uniqueSuggestions = this.removeSimilarSuggestions(relevantSuggestions);
+
+    return uniqueSuggestions.slice(0, limit);
+  }
+
+  removeSimilarSuggestions(suggestions) {
+    const uniqueSuggestions = [];
+    const seenCategories = new Set();
+
+    suggestions.forEach(suggestion => {
+      if (!seenCategories.has(suggestion.category)) {
+        uniqueSuggestions.push(suggestion);
+        seenCategories.add(suggestion.category);
+      }
+    });
+
+    return uniqueSuggestions;
+  }
+
+  showSuggestion(suggestion) {
+    const suggestionCard = this.createSuggestionCard(suggestion);
+    this.suggestionContainer.appendChild(suggestionCard);
+    this.activeSuggestions.push(suggestionCard);
+
+    // Auto-dismiss after 10 seconds
+    setTimeout(() => {
+      this.dismissSuggestion(suggestionCard);
+    }, 10000);
+
+    return suggestionCard;
+  }
+
+  createSuggestionCard(suggestion) {
+    const card = document.createElement('div');
+    card.className = 'suggestion-card';
+    card.dataset.suggestionId = suggestion.id;
+    card.dataset.emotion = suggestion.emotion;
+
+    card.innerHTML = `
+      <div class="suggestion-content">
+        <div class="suggestion-text">${suggestion.text}</div>
+        <div class="suggestion-actions">
+          <button class="suggestion-apply" onclick="suggestionManager.applySuggestion('${suggestion.id}')">
+            <i class="fas fa-check"></i> Apply
+          </button>
+          <button class="suggestion-dismiss" onclick="suggestionManager.dismissSuggestion(this.closest('.suggestion-card'))">
+            <i class="fas fa-times"></i> Dismiss
+          </button>
+        </div>
+        <div class="suggestion-confidence">
+          <div class="confidence-bar" style="width: ${suggestion.confidence * 100}%"></div>
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  applySuggestion(suggestionId) {
+    const suggestion = this.suggestions.find(s => s.id === suggestionId);
+    if (!suggestion) return;
+
+    // Record positive feedback
+    this.userFeedback[suggestionId] = 'applied';
+
+    // Execute suggestion action
+    this.executeSuggestionAction(suggestion);
+
+    // Remove the suggestion card
+    const card = document.querySelector(`[data-suggestion-id="${suggestionId}"]`);
+    if (card) {
+      this.dismissSuggestion(card);
+    }
+  }
+
+  executeSuggestionAction(suggestion) {
+    switch (suggestion.id) {
+      case 'voice-mode':
+        this.enableVoiceMode();
+        break;
+      case 'emotion-insights':
+        this.showEmotionAnalytics();
+        break;
+      case 'quick-claim':
+        this.startQuickClaim();
+        break;
+      case 'policy-review':
+        this.showPolicyReview();
+        break;
+      case 'calm-support':
+        this.provideCalmSupport();
+        break;
+      case 'explain-simple':
+        this.explainSimply();
+        break;
+      case 'positive-feedback':
+        this.engageUser();
+        break;
+    }
+  }
+
+  enableVoiceMode() {
+    // Enable voice narration for suggestions
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance('Voice mode enabled. I\'ll now read suggestions aloud.');
+      speechSynthesis.speak(utterance);
+    }
+  }
+
+  showEmotionAnalytics() {
+    // Show the analytics sidebar
+    const sidebar = document.querySelector('.analytics-sidebar');
+    if (sidebar) {
+      sidebar.classList.remove('collapsed');
+      document.getElementById('mainContent').classList.remove('sidebar-collapsed');
+    }
+  }
+
+  startQuickClaim() {
+    // Simulate starting a claim process
+    const flashSummary = document.getElementById('flash-summary');
+    flashSummary.textContent = '🚀 Quick claim process initiated. Please provide your policy details.';
+    flashSummary.classList.add('visible');
+    setTimeout(() => flashSummary.classList.remove('visible'), 3000);
+  }
+
+  showPolicyReview() {
+    // Show policy review modal
+    const flashSummary = document.getElementById('flash-summary');
+    flashSummary.textContent = '📋 Loading your policy review...';
+    flashSummary.classList.add('visible');
+    setTimeout(() => flashSummary.classList.remove('visible'), 3000);
+  }
+
+  provideCalmSupport() {
+    // Update ElevenLabs context for calm support
+    updateElevenLabsContext('worried');
+    const flashSummary = document.getElementById('flash-summary');
+    flashSummary.textContent = '🧘 I\'m here to help. Let\'s work through this together.';
+    flashSummary.classList.add('visible');
+    setTimeout(() => flashSummary.classList.remove('visible'), 3000);
+  }
+
+  explainSimply() {
+    // Update context for simpler explanations
+    updateElevenLabsContext('confused');
+    const flashSummary = document.getElementById('flash-summary');
+    flashSummary.textContent = '💡 I\'ll explain this in simpler terms.';
+    flashSummary.classList.add('visible');
+    setTimeout(() => flashSummary.classList.remove('visible'), 3000);
+  }
+
+  engageUser() {
+    // Show engagement options
+    const flashSummary = document.getElementById('flash-summary');
+    flashSummary.textContent = '🌟 Great! Would you like to explore premium features?';
+    flashSummary.classList.add('visible');
+    setTimeout(() => flashSummary.classList.remove('visible'), 3000);
+  }
+
+  dismissSuggestion(card) {
+    if (card && card.parentNode) {
+      card.classList.add('dismissing');
+      setTimeout(() => {
+        card.remove();
+        this.activeSuggestions = this.activeSuggestions.filter(s => s !== card);
+      }, 300);
+    }
+  }
+
+  startAutoDismissTimer() {
+    setInterval(() => {
+      this.activeSuggestions.forEach(card => {
+        const timestamp = card.dataset.timestamp;
+        if (timestamp && Date.now() - parseInt(timestamp) > 10000) {
+          this.dismissSuggestion(card);
+        }
+      });
+    }, 1000);
+  }
+
+  updateEmotionHistory(emotion) {
+    this.emotionHistory.push(emotion);
+    if (this.emotionHistory.length > 10) {
+      this.emotionHistory.shift();
+    }
+
+    // Show relevant suggestions based on emotion
+    const relevantSuggestions = this.getRelevantSuggestions(emotion, 2);
+    relevantSuggestions.forEach(suggestion => {
+      this.showSuggestion(suggestion);
+    });
+  }
+
+  clearAllSuggestions() {
+    this.activeSuggestions.forEach(card => {
+      this.dismissSuggestion(card);
+    });
+  }
+}
+
+// Initialize suggestion manager
+const suggestionManager = new SuggestionManager();
+
+// Integrate with existing emotion detection
+const originalDetectEmotion = detectEmotion;
+detectEmotion = function(text) {
+  const emotion = originalDetectEmotion(text);
+  suggestionManager.updateEmotionHistory(emotion);
+  
+  
+  
+  // Update Flow Waves with detected emotion
+  if (flowWaves) {
+    flowWaves.reactToEmotion(emotion);
+  }
+  
+  return emotion;
+};
+
+
+
+// Flow Waves Controller
+class FlowWavesController {
+    constructor() {
+        this.container = document.querySelector('.flow-waves-container');
+        this.waves = document.querySelectorAll('.flow-wave');
+        this.isActive = true;
+        this.init();
+    }
+
+    init() {
+        if (this.container) {
+            console.log('🌊 Flow Waves initialized');
+            this.startFlow();
+        }
+    }
+
+    startFlow() {
+        if (this.waves.length > 0) {
+            this.waves.forEach((wave, index) => {
+                wave.style.animationDelay = `${index}s`;
+            });
+        }
+    }
+
+    setIntensity(intensity) {
+        // Adjust wave speed based on conversation intensity
+        const speeds = {
+            low: '4s',
+            medium: '3s',
+            high: '2s',
+            extreme: '1.5s'
+        };
+        
+        if (this.waves.length > 0) {
+            this.waves.forEach(wave => {
+                wave.style.animationDuration = speeds[intensity] || '3s';
+            });
+        }
+    }
+
+    reactToEmotion(emotion) {
+        // Change wave color based on emotion
+        const colors = {
+            happy: 'rgba(0, 255, 136, 0.3)',
+            frustrated: 'rgba(255, 165, 0, 0.3)',
+            angry: 'rgba(255, 0, 0, 0.3)',
+            confused: 'rgba(255, 255, 0, 0.3)',
+            worried: 'rgba(255, 0, 255, 0.3)',
+            neutral: 'rgba(0, 255, 255, 0.3)'
+        };
+        
+        if (this.waves.length > 0) {
+            this.waves.forEach(wave => {
+                wave.style.borderColor = colors[emotion] || colors.neutral;
+            });
+        }
+    }
+}
+
+// Initialize Flow Waves Controller
+const flowWaves = new FlowWavesController();
