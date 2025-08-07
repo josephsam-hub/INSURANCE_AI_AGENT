@@ -6,10 +6,16 @@
   <title>Analytics Test - InsureBot Pulse</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- Analytics Toggle Bar (when closed) -->
+  <div class="analytics-toggle-bar" id="analyticsToggleBar">
+    <button class="analytics-open" id="openAnalytics" aria-label="Open Analytics">
+      <i class="fas fa-chart-bar"></i>
+      <span>Analytics</span>
+    </button>
+  </div>
+
   <!-- Left-Side Analytics Dashboard -->
   <div class="analytics-sidebar" id="analyticsSidebar">
     <div class="sidebar-header">
@@ -18,162 +24,92 @@
         <span class="status-dot"></span>
         <span class="status-text">Idle</span>
       </div>
+      <button class="analytics-close" id="closeAnalytics" aria-label="Close Analytics">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
     
     <div class="sidebar-content">
-      <!-- Real-time Metrics Grid -->
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-icon">📊</div>
-          <div class="metric-info">
-            <span class="metric-label">Latency</span>
-            <span class="metric-value" id="latencyValue">0ms</span>
-          </div>
-          <div class="metric-status" id="latencyStatus">🟢</div>
-        </div>
-        
-        <div class="metric-card">
-          <div class="metric-icon">😊</div>
-          <div class="metric-info">
-            <span class="metric-label">Emotion</span>
-            <span class="metric-value" id="emotionValue">Neutral</span>
-          </div>
-          <div class="metric-status" id="emotionStatus">🟡</div>
-        </div>
-        
-        <div class="metric-card">
-          <div class="metric-icon">🎚️</div>
-          <div class="metric-info">
-            <span class="metric-label">Empathy</span>
-            <span class="metric-value" id="empathyValue">0%</span>
-          </div>
-          <div class="metric-status" id="empathyStatus">🟡</div>
-        </div>
-        
-        <div class="metric-card">
-          <div class="metric-icon">🛑</div>
-          <div class="metric-info">
-            <span class="metric-label">Interruptions</span>
-            <span class="metric-value" id="interruptionsValue">0</span>
-          </div>
-          <div class="metric-status" id="interruptionsStatus">🟢</div>
-        </div>
-      </div>
-
-      <!-- Charts Section -->
-      <div class="charts-section">
-        <!-- Emotion Timeline Chart -->
-        <div class="chart-container">
-          <h4><i class="fas fa-chart-line"></i> Emotion Timeline</h4>
-          <canvas id="emotionChart" width="300" height="150"></canvas>
-        </div>
-        
-        <!-- Interruption Heatmap -->
-        <div class="chart-container">
-          <h4><i class="fas fa-fire"></i> Interruption Heatmap</h4>
-          <canvas id="interruptionChart" width="300" height="150"></canvas>
-        </div>
-        
-        <!-- Empathy Gauge -->
-        <div class="chart-container">
-          <h4><i class="fas fa-heart"></i> Empathy Score</h4>
-          <canvas id="empathyChart" width="300" height="150"></canvas>
-        </div>
-      </div>
-
-      <!-- Call Flow Timeline -->
-      <div class="timeline-section">
-        <h4><i class="fas fa-clock"></i> Call Flow</h4>
-        <div class="timeline-container" id="timelineContainer">
-          <div class="timeline-item">
-            <div class="timeline-dot user"></div>
-            <div class="timeline-content">
-              <span class="speaker">User</span>
-              <span class="message">Call started</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <h4>Analytics Test Panel</h4>
+      <p>This is a test panel to verify the close/open functionality works correctly.</p>
+      <p>Click the X button to close this panel, then look for the toggle bar on the left side.</p>
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <div class="main-content" id="mainContent">
+  <!-- Main Content -->
+  <div class="main-content">
     <header>
-      <div class="container header-group">
-        <img src="https://www.valuenable.in/images/logo.png" alt="ValuEnable Logo" class="logo" />
-        <div>
-          <h1>Analytics Test</h1>
-          <p class="subtitle">Testing Live Analytics Dashboard</p>
-        </div>
+      <div class="header-group">
+        <div class="logo">🧠</div>
+        <h1>InsureBot Pulse</h1>
       </div>
+      <p class="subtitle">Emotion-Aware AI Insurance Agent</p>
     </header>
 
     <main>
-      <section class="ai-hero">
+      <div class="ai-hero">
         <div class="visual-zone">
           <div class="bloom-sphere">
-            <canvas id="bloomCanvas"></canvas>
-            <div class="mic-shadow">
-              <button id="testBtn" aria-label="Test Analytics">
-                <i class="fas fa-play"></i>
-                <span>Test Analytics</span>
-              </button>
-            </div>
+            <canvas id="sphereCanvas"></canvas>
           </div>
         </div>
+        
         <div class="bot-desc">
-          <h2>Testing the Analytics Dashboard</h2>
-          <p>Click the button to test the live analytics functionality.</p>
-          <div id="testResults"></div>
+          <h2>Analytics Test</h2>
+          <p>This page tests the analytics panel close/open functionality.</p>
+          <ul class="ai-benefits">
+            <li>✅ Close button should hide the panel</li>
+            <li>✅ Toggle bar should appear on the left</li>
+            <li>✅ Open button should show the panel again</li>
+          </ul>
         </div>
-      </section>
+      </div>
     </main>
-
-    <footer> &copy; 2025 ValuEnable. All rights reserved. </footer>
   </div>
 
-  <script src="script.js"></script>
   <script>
-    // Test analytics functionality
-    document.getElementById('testBtn').addEventListener('click', () => {
-      const results = document.getElementById('testResults');
-      results.innerHTML = '<h3>Testing Analytics...</h3>';
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 Analytics Test Page initialized');
       
-      // Test emotion detection
-      setTimeout(() => {
-        updateEmotionChart('happy');
-        results.innerHTML += '<p>✅ Emotion chart updated</p>';
-      }, 500);
+      // Initialize Analytics Controls
+      const closeAnalyticsBtn = document.getElementById('closeAnalytics');
+      const analyticsSidebar = document.getElementById('analyticsSidebar');
+      const analyticsToggleBar = document.getElementById('analyticsToggleBar');
+      const openAnalyticsBtn = document.getElementById('openAnalytics');
       
-      // Test interruption tracking
-      setTimeout(() => {
-        updateInterruptionChart();
-        results.innerHTML += '<p>✅ Interruption chart updated</p>';
-      }, 1000);
+      console.log('🔍 Analytics elements found:', {
+        closeBtn: !!closeAnalyticsBtn,
+        sidebar: !!analyticsSidebar,
+        toggleBar: !!analyticsToggleBar,
+        openBtn: !!openAnalyticsBtn
+      });
       
-      // Test timeline
-      setTimeout(() => {
-        addTimelineItem('User', 'Test message from user');
-        addTimelineItem('AI', 'Test response from AI');
-        results.innerHTML += '<p>✅ Timeline updated</p>';
-      }, 1500);
+      // Analytics Close Button Functionality
+      if (closeAnalyticsBtn && analyticsSidebar) {
+        closeAnalyticsBtn.addEventListener('click', function() {
+          console.log('🔴 Close analytics clicked');
+          analyticsSidebar.classList.add('collapsed');
+          console.log('📊 Analytics panel closed');
+          
+          // Show toggle bar after collapse animation
+          setTimeout(() => {
+            if (analyticsToggleBar) {
+              analyticsToggleBar.classList.add('visible');
+              console.log('📊 Toggle bar made visible');
+            }
+          }, 300);
+        });
+      }
       
-      // Test metrics
-      setTimeout(() => {
-        const latencyValue = document.getElementById('latencyValue');
-        const emotionValue = document.getElementById('emotionValue');
-        const empathyValue = document.getElementById('empathyValue');
-        const interruptionsValue = document.getElementById('interruptionsValue');
-        
-        if (latencyValue) latencyValue.textContent = '245ms';
-        if (emotionValue) emotionValue.textContent = 'Happy';
-        if (empathyValue) empathyValue.textContent = '85%';
-        if (interruptionsValue) interruptionsValue.textContent = '2';
-        
-        results.innerHTML += '<p>✅ Metrics updated</p>';
-        results.innerHTML += '<h4>🎉 All analytics tests passed!</h4>';
-      }, 2000);
+      // Analytics Toggle Bar Functionality
+      if (analyticsToggleBar && openAnalyticsBtn && analyticsSidebar) {
+        openAnalyticsBtn.addEventListener('click', function() {
+          console.log('🟢 Open analytics clicked');
+          analyticsSidebar.classList.remove('collapsed');
+          analyticsToggleBar.classList.remove('visible');
+          console.log('📊 Analytics panel opened');
+        });
+      }
     });
   </script>
 </body>
