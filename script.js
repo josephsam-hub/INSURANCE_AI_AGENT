@@ -2260,21 +2260,36 @@ class FlowWavesController {
         this.container = document.querySelector('.flow-waves-container');
         this.waves = document.querySelectorAll('.flow-wave');
         this.isActive = true;
+        console.log('🌊 FlowWavesController constructor called');
+        console.log('Container found:', this.container);
+        console.log('Waves found:', this.waves.length);
         this.init();
     }
 
     init() {
         if (this.container) {
             console.log('🌊 Flow Waves initialized');
+            console.log('Container styles:', {
+                position: window.getComputedStyle(this.container).position,
+                zIndex: window.getComputedStyle(this.container).zIndex,
+                display: window.getComputedStyle(this.container).display,
+                visibility: window.getComputedStyle(this.container).visibility
+            });
             this.startFlow();
+        } else {
+            console.error('❌ Flow waves container not found!');
         }
     }
 
     startFlow() {
         if (this.waves.length > 0) {
+            console.log('🌊 Starting wave flow with', this.waves.length, 'waves');
             this.waves.forEach((wave, index) => {
                 wave.style.animationDelay = `${index}s`;
+                console.log(`Wave ${index + 1} animation delay set to ${index}s`);
             });
+        } else {
+            console.error('❌ No waves found!');
         }
     }
 
@@ -2315,3 +2330,38 @@ class FlowWavesController {
 
 // Initialize Flow Waves Controller
 const flowWaves = new FlowWavesController();
+
+// Font Awesome fallback detection
+function checkFontAwesome() {
+  const testIcon = document.createElement('i');
+  testIcon.className = 'fas fa-heart';
+  testIcon.style.position = 'absolute';
+  testIcon.style.left = '-9999px';
+  document.body.appendChild(testIcon);
+  
+  const computedStyle = window.getComputedStyle(testIcon, ':before');
+  const content = computedStyle.getPropertyValue('content');
+  
+  document.body.removeChild(testIcon);
+  
+  // If Font Awesome is not loaded, show fallback emojis
+  if (!content || content === 'none' || content === 'normal') {
+    console.log('Font Awesome not detected, using fallback emojis');
+    const icons = document.querySelectorAll('i[data-fallback]');
+    icons.forEach(icon => {
+      const fallback = icon.getAttribute('data-fallback');
+      if (fallback) {
+        icon.textContent = fallback;
+        icon.style.fontFamily = 'inherit';
+      }
+    });
+  } else {
+    console.log('Font Awesome detected and working');
+  }
+}
+
+// Check Font Awesome when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Wait a bit for Font Awesome to load
+  setTimeout(checkFontAwesome, 1000);
+});
