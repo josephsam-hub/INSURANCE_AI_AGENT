@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElevenLabs Widget Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+    .widget-container {
+      margin: 40px 0;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+    .status {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .status.success {
+      background: rgba(76, 175, 80, 0.2);
+      border: 1px solid #4CAF50;
+    }
+    .status.error {
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid #F44336;
+    }
+    .agent-info {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎤 ElevenLabs Widget Test</h1>
+    
+    <div class="agent-info">
+      <h3>Agent Configuration</h3>
+      <p><strong>Agent ID:</strong> agent_01k0k42wczf7ravzr0gmvsqbfn</p>
+      <p><strong>Status:</strong> <span id="widgetStatus">Loading...</span></p>
+    </div>
+
+    <div class="widget-container">
+      <h3>ElevenLabs Conversational Widget</h3>
+      <p>Click the widget below to test the voice conversation:</p>
+      
+      <!-- ElevenLabs Conversational Widget -->
+      <elevenlabs-convai agent-id="agent_01k0k42wczf7ravzr0gmvsqbfn"></elevenlabs-convai>
+    </div>
+
+    <div class="status" id="statusMessage">
+      <p>Testing ElevenLabs widget integration...</p>
+    </div>
+
+    <div>
+      <h3>Test Instructions:</h3>
+      <ol style="text-align: left; max-width: 600px; margin: 0 auto;">
+        <li>Wait for the widget to load (should appear as a chat bubble)</li>
+        <li>Click on the widget to open the conversation interface</li>
+        <li>Try speaking or typing a message</li>
+        <li>Check if the agent responds appropriately</li>
+      </ol>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🧪 ElevenLabs Widget Test initialized');
+      
+      // Check if widget loads
+      setTimeout(() => {
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget) {
+          console.log('✅ ElevenLabs widget element found');
+          document.getElementById('widgetStatus').textContent = 'Widget loaded successfully';
+          document.getElementById('statusMessage').innerHTML = '<p>✅ Widget loaded successfully! Try clicking on it to start a conversation.</p>';
+          document.getElementById('statusMessage').className = 'status success';
+        } else {
+          console.log('❌ ElevenLabs widget element not found');
+          document.getElementById('widgetStatus').textContent = 'Widget not found';
+          document.getElementById('statusMessage').innerHTML = '<p>❌ Widget not found. Check the console for errors.</p>';
+          document.getElementById('statusMessage').className = 'status error';
+        }
+      }, 3000);
+
+      // Monitor for widget events
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'elevenlabs-widget') {
+          console.log('📡 ElevenLabs widget event:', event.data);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

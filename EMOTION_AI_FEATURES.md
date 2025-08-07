@@ -184,7 +184,7 @@ Emotion Detected → Context Updated → ElevenLabs Adaptation → UI Feedback �
 ## 🔧 Setup & Configuration
 
 ### Prerequisites:
-- ElevenLabs Conversational Widget (agent_id: agent_2301k1xsr90ye6psdrdp5s1xy15w)
+- ElevenLabs Conversational Widget (agent_id: agent_01k0k42wczf7ravzr0gmvsqbfn)
 - Modern web browser with localStorage support
 - Socket.io server (optional, for analytics)
 

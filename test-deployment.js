@@ -70,7 +70,7 @@ async function runTests() {
     
     console.log('\n🎉 Deployment Test Complete!');
     console.log('🌐 Access your app at: http://localhost:3000');
-    console.log('🎤 ElevenLabs Agent ID: agent_2301k1xsr90ye6psdrdp5s1xy15w');
+    console.log('🎤 ElevenLabs Agent ID: agent_01k0k42wczf7ravzr0gmvsqbfn');
 }
 
 runTests().catch(console.error); 
