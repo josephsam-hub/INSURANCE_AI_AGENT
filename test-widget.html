@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Widget Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .widget-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>ElevenLabs Widget Test</h1>
+        <p>Testing agent ID: <strong>agent_01k0k42wczf7ravzr0gmvsqbfn</strong></p>
+        
+        <div class="widget-container">
+            <h3>Widget Container</h3>
+            <elevenlabs-convai agent-id="agent_01k0k42wczf7ravzr0gmvsqbfn"></elevenlabs-convai>
+        </div>
+        
+        <div>
+            <button class="test-button" onclick="testWidgetMethods()">Test Widget Methods</button>
+            <button class="test-button" onclick="testShadowRoot()">Test Shadow Root</button>
+            <button class="test-button" onclick="testMicButton()">Test Mic Button</button>
+            <button class="test-button" onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function testWidgetMethods() {
+            log('Testing widget methods...');
+            const widget = document.querySelector('elevenlabs-convai');
+            
+            if (!widget) {
+                log('❌ Widget not found');
+                return;
+            }
+            
+            log('✅ Widget found');
+            log(`Widget tagName: ${widget.tagName}`);
+            log(`Widget methods: ${Object.getOwnPropertyNames(widget)}`);
+            
+            // Test available methods
+            ['open', 'show', 'start', 'click', 'focus'].forEach(method => {
+                if (typeof widget[method] === 'function') {
+                    log(`✅ ${method}() method available`);
+                } else {
+                    log(`❌ ${method}() method not available`);
+                }
+            });
+        }
+
+        function testShadowRoot() {
+            log('Testing shadow root...');
+            const widget = document.querySelector('elevenlabs-convai');
+            
+            if (!widget) {
+                log('❌ Widget not found');
+                return;
+            }
+            
+            if (widget.shadowRoot) {
+                log('✅ Shadow root found');
+                const buttons = widget.shadowRoot.querySelectorAll('button');
+                log(`Found ${buttons.length} buttons in shadow root`);
+                
+                buttons.forEach((button, index) => {
+                    log(`Button ${index + 1}: ${button.textContent.trim()} (aria-label: ${button.getAttribute('aria-label')})`);
+                });
+            } else {
+                log('❌ Shadow root not found');
+            }
+        }
+
+        function testMicButton() {
+            log('Testing mic button...');
+            const widget = document.querySelector('elevenlabs-convai');
+            
+            if (!widget || !widget.shadowRoot) {
+                log('❌ Widget or shadow root not found');
+                return;
+            }
+            
+            const micButton = widget.shadowRoot.querySelector('button[aria-label*="record"], button[aria-label*="mic"], button[aria-label*="start"], button[aria-label*="listen"]');
+            
+            if (micButton) {
+                log('✅ Mic button found');
+                log(`Button text: ${micButton.textContent.trim()}`);
+                log(`Button aria-label: ${micButton.getAttribute('aria-label')}`);
+                log('Attempting to click mic button...');
+                micButton.click();
+                log('✅ Mic button clicked');
+            } else {
+                log('❌ Mic button not found');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            log('Page loaded, waiting for widget...');
+            setTimeout(() => {
+                testWidgetMethods();
+                setTimeout(() => {
+                    testShadowRoot();
+                }, 1000);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>InsureBot Pulse - Emotion-Aware AI Insurance Agent</title>
+  <meta name="description" content="Hackathon-winning emotion-aware voice AI insurance agent with real-time analytics and adaptive responses, powered by ElevenLabs and Groq."/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Left-Side Analytics Dashboard -->
+  <div class="analytics-sidebar" id="analyticsSidebar">
+    <div class="sidebar-header">
+      <h3><i class="fas fa-brain"></i> Live Call Analytics</h3>
+      <div class="call-status" id="callStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Idle</span>
+      </div>
+    </div>
+    
+    <div class="sidebar-content">
+      <!-- Real-time Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">📊</div>
+          <div class="metric-info">
+            <span class="metric-label">Latency</span>
+            <span class="metric-value" id="latencyValue">0ms</span>
+          </div>
+          <div class="metric-status" id="latencyStatus">🟢</div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-icon">😊</div>
+          <div class="metric-info">
+            <span class="metric-label">Emotion</span>
+            <span class="metric-value" id="emotionValue">Neutral</span>
+          </div>
+          <div class="metric-status" id="emotionStatus">🟡</div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-icon">🎚️</div>
+          <div class="metric-info">
+            <span class="metric-label">Empathy</span>
+            <span class="metric-value" id="empathyValue">0%</span>
+          </div>
+          <div class="metric-status" id="empathyStatus">🟡</div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-icon">🛑</div>
+          <div class="metric-info">
+            <span class="metric-label">Interruptions</span>
+            <span class="metric-value" id="interruptionsValue">0</span>
+          </div>
+          <div class="metric-status" id="interruptionsStatus">🟢</div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <!-- Emotion Timeline Chart -->
+        <div class="chart-container">
+          <h4><i class="fas fa-chart-line"></i> Emotion Timeline</h4>
+          <canvas id="emotionChart" width="300" height="150"></canvas>
+        </div>
+        
+        <!-- Interruption Heatmap -->
+        <div class="chart-container">
+          <h4><i class="fas fa-fire"></i> Interruption Heatmap</h4>
+          <canvas id="interruptionChart" width="300" height="150"></canvas>
+        </div>
+        
+        <!-- Empathy Gauge -->
+        <div class="chart-container">
+          <h4><i class="fas fa-heart"></i> Empathy Score</h4>
+          <canvas id="empathyChart" width="300" height="150"></canvas>
+        </div>
+      </div>
+
+      <!-- Call Flow Timeline -->
+      <div class="timeline-section">
+        <h4><i class="fas fa-clock"></i> Call Flow</h4>
+        <div class="timeline-container" id="timelineContainer">
+          <div class="timeline-item">
+            <div class="timeline-dot user"></div>
+            <div class="timeline-content">
+              <span class="speaker">User</span>
+              <span class="message">Call started</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Call Summary -->
+      <div class="summary-section" id="summarySection" style="display: none;">
+        <h4><i class="fas fa-file-alt"></i> Call Summary</h4>
+        <div class="summary-content" id="summaryContent">
+          <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Generating summary...</p>
+          </div>
+        </div>
+        <button class="copy-summary" id="copySummary">
+          <i class="fas fa-copy"></i> Copy Summary
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content" id="mainContent">
+    <header>
+      <div class="container header-group">
+        <img src="https://www.valuenable.in/images/logo.png" alt="ValuEnable Logo" class="logo" />
+        <div>
+          <h1>InsureBot Pulse</h1>
+          <p class="subtitle">Emotion-Aware AI Insurance Assistant</p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="ai-hero">
+        <div class="visual-zone">
+          <div class="bloom-sphere">
+            <canvas id="bloomCanvas"></canvas>
+            <div class="mic-shadow">
+              <button id="speakBtn" aria-label="Start speaking">
+                <i class="fas fa-microphone"></i>
+                <span>Start Speaking</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="bot-desc">
+          <h2>Speak like you’re talking to a friend.Get answers like you’re talking to an expert</h2>
+          <ul class="ai-benefits">
+            <li><span class="bubble"><i class="fas fa-robot"></i></span> Book appointments, claims or renewals</li>
+            <li><span class="bubble"><i class="fas fa-brain"></i></span> 24/7 coverage Q&amp;A with emotion awareness</li>
+            <li><span class="bubble"><i class="fas fa-heart"></i></span> Emotion-adaptive, human-friendly support</li>
+            <li><span class="bubble"><i class="fas fa-chart-line"></i></span> Real-time emotion analytics & insights</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- Dynamic Flash Message for Conversation Summary -->
+    <div id="flash-summary" class="flash-summary"></div>
+
+    <!-- Call Summary Modal -->
+    <div class="modal-overlay" id="summaryModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fas fa-file-alt"></i> Call Summary</h3>
+          <button class="modal-close" id="closeSummaryModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="summaryContent">
+          <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Generating summary...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal-overlay" id="feedbackModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fas fa-star"></i> Rate Your Experience</h3>
+          <button class="modal-close" id="closeFeedbackModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="rating-stars">
+            <i class="fas fa-star" data-rating="1"></i>
+            <i class="fas fa-star" data-rating="2"></i>
+            <i class="fas fa-star" data-rating="3"></i>
+            <i class="fas fa-star" data-rating="4"></i>
+            <i class="fas fa-star" data-rating="5"></i>
+          </div>
+          <textarea placeholder="Share your feedback (optional)" id="feedbackComment"></textarea>
+          <button class="submit-feedback" id="submitFeedback">Submit Feedback</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ElevenLabs widget floating assistant -->
+    <div class="elevenlabs-widget" id="elevenlabsWidget">
+      <div class="widget-label">
+        <i class="fas fa-message"></i> Need help?
+      </div>
+      <div class="widget-box">
+        <!-- ElevenLabs Conversational Widget -->
+        <elevenlabs-convai agent-id="agent_2301k1xsr90ye6psdrdp5s1xy15w"></elevenlabs-convai>
+      </div>
+    </div>
+
+    <footer> &copy; 2025 ValuEnable. All rights reserved. </footer>
+  </div>
+
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script src="script.js"></script>
+</body>
+</html>

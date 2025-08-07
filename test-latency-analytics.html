@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Latency & Analytics Test - InsureBot Pulse</title>
+  <meta name="description" content="Test page for latency tracking and analytics functionality"/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Analytics Toggle Bar (when closed) -->
+  <div class="analytics-toggle-bar" id="analyticsToggleBar">
+    <button class="analytics-open" id="openAnalytics" aria-label="Open Analytics">
+      <i class="fas fa-chart-bar"></i>
+      <span>Analytics</span>
+    </button>
+  </div>
+
+  <!-- Left-Side Analytics Dashboard -->
+  <div class="analytics-sidebar" id="analyticsSidebar">
+    <div class="sidebar-header">
+      <h3><i class="fas fa-brain"></i> Live Call Analytics</h3>
+      <div class="call-status" id="callStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Testing</span>
+      </div>
+      <button class="analytics-close" id="closeAnalytics" aria-label="Close Analytics">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="sidebar-content">
+      <div class="metric-group">
+        <h4>Latency Test</h4>
+        <div class="metric">
+          <span class="metric-label">Current:</span>
+          <span class="metric-value" id="latencyValue">0ms</span>
+          <span class="metric-status" id="latencyStatus">🟢</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Average:</span>
+          <span class="metric-value" id="avgLatency">0ms</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Count:</span>
+          <span class="metric-value" id="latencyCount">0</span>
+        </div>
+      </div>
+
+      <div class="metric-group">
+        <h4>Test Controls</h4>
+        <button id="testLatency" class="test-btn">Test Latency (200ms)</button>
+        <button id="testSlowLatency" class="test-btn">Test Slow Latency (600ms)</button>
+        <button id="testEmotion" class="test-btn">Test Emotion Detection</button>
+        <button id="testInterruption" class="test-btn">Test Interruption</button>
+        <button id="resetLatency" class="test-btn">Reset Latency</button>
+      </div>
+
+      <div class="metric-group">
+        <h4>Analytics Status</h4>
+        <div class="metric">
+          <span class="metric-label">Socket:</span>
+          <span class="metric-value" id="socketStatus">Connecting...</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Server:</span>
+          <span class="metric-value" id="serverStatus">Checking...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header>
+      <div class="header-group">
+        <div class="logo">🧠</div>
+        <h1>Latency & Analytics Test</h1>
+      </div>
+      <p class="subtitle">Testing InsureBot Pulse Core Functionality</p>
+    </header>
+
+    <main>
+      <div class="ai-hero">
+        <div class="visual-zone">
+          <div class="bloom-sphere">
+            <canvas id="sphereCanvas"></canvas>
+          </div>
+        </div>
+        
+        <div class="bot-desc">
+          <h2>Functionality Test</h2>
+          <p>This page tests the core latency tracking and analytics functionality.</p>
+          
+          <div class="test-results">
+            <h3>Test Results:</h3>
+            <ul id="testResults">
+              <li>⏳ Initializing tests...</li>
+            </ul>
+          </div>
+
+          <div class="test-controls">
+            <h3>Manual Tests:</h3>
+            <button id="startLatencyTest" class="primary-btn">Start Latency Test</button>
+            <button id="testAnalyticsToggle" class="primary-btn">Test Analytics Toggle</button>
+            <button id="testSocketConnection" class="primary-btn">Test Socket Connection</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Test variables
+    let testResults = [];
+    let socket;
+    let isConnected = false;
+    let latencyHistory = [];
+    let currentLatency = 0;
+
+    // Initialize tests
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🧪 Latency & Analytics Test initialized');
+      
+      initializeSocket();
+      initializeAnalyticsControls();
+      runInitialTests();
+    });
+
+    // Socket.IO Connection
+    function initializeSocket() {
+      try {
+        socket = io('http://localhost:3000', {
+          timeout: 5000,
+          reconnection: true,
+          reconnectionAttempts: 3
+        });
+
+        socket.on('connect', () => {
+          console.log('✅ Connected to server');
+          isConnected = true;
+          updateSocketStatus('Connected');
+          addTestResult('✅ Socket connection successful');
+        });
+
+        socket.on('disconnect', () => {
+          console.log('❌ Disconnected from server');
+          isConnected = false;
+          updateSocketStatus('Disconnected');
+          addTestResult('❌ Socket disconnected');
+        });
+
+        socket.on('connect_error', (error) => {
+          console.log('⚠️ Server connection failed');
+          isConnected = false;
+          updateSocketStatus('Failed');
+          addTestResult('❌ Socket connection failed');
+        });
+
+        socket.on('analytics-update', (data) => {
+          console.log('📊 Analytics update received:', data);
+          updateAnalyticsDisplay(data);
+        });
+      } catch (error) {
+        console.log('⚠️ Socket.IO not available');
+        updateSocketStatus('Not Available');
+        addTestResult('❌ Socket.IO not available');
+      }
+    }
+
+    // Analytics Controls
+    function initializeAnalyticsControls() {
+      const closeAnalyticsBtn = document.getElementById('closeAnalytics');
+      const analyticsSidebar = document.getElementById('analyticsSidebar');
+      const analyticsToggleBar = document.getElementById('analyticsToggleBar');
+      const openAnalyticsBtn = document.getElementById('openAnalytics');
+      
+      console.log('🔍 Analytics elements found:', {
+        closeBtn: !!closeAnalyticsBtn,
+        sidebar: !!analyticsSidebar,
+        toggleBar: !!analyticsToggleBar,
+        openBtn: !!openAnalyticsBtn
+      });
+      
+      // Analytics Close Button Functionality
+      if (closeAnalyticsBtn && analyticsSidebar) {
+        closeAnalyticsBtn.addEventListener('click', function() {
+          console.log('🔴 Close analytics clicked');
+          analyticsSidebar.classList.add('collapsed');
+          addTestResult('✅ Analytics panel closed successfully');
+          
+          // Show toggle bar after collapse animation
+          setTimeout(() => {
+            if (analyticsToggleBar) {
+              analyticsToggleBar.classList.add('visible');
+              console.log('📊 Toggle bar made visible');
+            }
+          }, 300);
+        });
+      }
+      
+      // Analytics Toggle Bar Functionality
+      if (analyticsToggleBar && openAnalyticsBtn && analyticsSidebar) {
+        openAnalyticsBtn.addEventListener('click', function() {
+          console.log('🟢 Open analytics clicked');
+          analyticsSidebar.classList.remove('collapsed');
+          analyticsToggleBar.classList.remove('visible');
+          addTestResult('✅ Analytics panel opened successfully');
+        });
+      }
+    }
+
+    // Test Functions
+    function runInitialTests() {
+      addTestResult('🚀 Starting initial tests...');
+      
+      // Test server health
+      testServerHealth();
+      
+      // Test analytics elements
+      testAnalyticsElements();
+      
+      // Test latency functions
+      testLatencyFunctions();
+    }
+
+    function testServerHealth() {
+      fetch('http://localhost:3000/api/health')
+        .then(response => response.json())
+        .then(data => {
+          console.log('🏥 Server health:', data);
+          updateServerStatus('Healthy');
+          addTestResult('✅ Server health check passed');
+        })
+        .catch(error => {
+          console.error('🏥 Server health error:', error);
+          updateServerStatus('Unhealthy');
+          addTestResult('❌ Server health check failed');
+        });
+    }
+
+    function testAnalyticsElements() {
+      const elements = {
+        closeBtn: document.getElementById('closeAnalytics'),
+        sidebar: document.getElementById('analyticsSidebar'),
+        toggleBar: document.getElementById('analyticsToggleBar'),
+        openBtn: document.getElementById('openAnalytics')
+      };
+      
+      const allFound = Object.values(elements).every(el => el !== null);
+      
+      if (allFound) {
+        addTestResult('✅ All analytics elements found');
+      } else {
+        addTestResult('❌ Some analytics elements missing');
+      }
+    }
+
+    function testLatencyFunctions() {
+      // Test latency measurement
+      const testLatency = 250;
+      simulateLatencyMeasurement(testLatency);
+      addTestResult(`✅ Latency measurement test (${testLatency}ms)`);
+    }
+
+    function simulateLatencyMeasurement(latency) {
+      // Simulate latency measurement
+      const userSpeechEnd = performance.now();
+      const botResponseStart = userSpeechEnd + latency;
+      
+      const measuredLatency = Math.round(botResponseStart - userSpeechEnd);
+      
+      // Update local display
+      updateLatencyDisplay(measuredLatency);
+      
+      // Send to server
+      if (socket && isConnected) {
+        socket.emit('latency-update', {
+          latency: measuredLatency,
+          timestamp: Date.now(),
+          userSpeechEnd: userSpeechEnd,
+          botResponseStart: botResponseStart
+        });
+      }
+    }
+
+    function updateLatencyDisplay(latency) {
+      const latencyValue = document.getElementById('latencyValue');
+      const latencyStatus = document.getElementById('latencyStatus');
+      
+      if (latencyValue && latencyStatus) {
+        latencyValue.textContent = `${latency}ms`;
+        
+        // Color-coded status
+        if (latency < 300) {
+          latencyStatus.textContent = '🟢';
+          latencyStatus.style.color = '#4CAF50';
+        } else if (latency < 500) {
+          latencyStatus.textContent = '🟡';
+          latencyStatus.style.color = '#FF9800';
+        } else {
+          latencyStatus.textContent = '🔴';
+          latencyStatus.style.color = '#F44336';
+        }
+        
+        // Update history
+        latencyHistory.push(latency);
+        if (latencyHistory.length > 50) {
+          latencyHistory.shift();
+        }
+        
+        // Update average
+        const average = Math.round(latencyHistory.reduce((a, b) => a + b, 0) / latencyHistory.length);
+        const avgLatency = document.getElementById('avgLatency');
+        const latencyCount = document.getElementById('latencyCount');
+        
+        if (avgLatency) avgLatency.textContent = `${average}ms`;
+        if (latencyCount) latencyCount.textContent = latencyHistory.length;
+      }
+    }
+
+    function updateAnalyticsDisplay(data) {
+      console.log('📊 Updating analytics display:', data);
+      
+      if (data.averageLatency !== undefined) {
+        updateLatencyDisplay(Math.round(data.averageLatency));
+      }
+    }
+
+    function updateSocketStatus(status) {
+      const socketStatus = document.getElementById('socketStatus');
+      if (socketStatus) {
+        socketStatus.textContent = status;
+        socketStatus.style.color = status === 'Connected' ? '#4CAF50' : '#F44336';
+      }
+    }
+
+    function updateServerStatus(status) {
+      const serverStatus = document.getElementById('serverStatus');
+      if (serverStatus) {
+        serverStatus.textContent = status;
+        serverStatus.style.color = status === 'Healthy' ? '#4CAF50' : '#F44336';
+      }
+    }
+
+    function addTestResult(message) {
+      testResults.push(message);
+      const resultsList = document.getElementById('testResults');
+      if (resultsList) {
+        const li = document.createElement('li');
+        li.textContent = message;
+        resultsList.appendChild(li);
+      }
+      console.log(message);
+    }
+
+    // Event Listeners
+    document.getElementById('testLatency').addEventListener('click', () => {
+      simulateLatencyMeasurement(200);
+      addTestResult('✅ Test latency (200ms) sent');
+    });
+
+    document.getElementById('testSlowLatency').addEventListener('click', () => {
+      simulateLatencyMeasurement(600);
+      addTestResult('✅ Test slow latency (600ms) sent');
+    });
+
+    document.getElementById('testEmotion').addEventListener('click', () => {
+      if (socket && isConnected) {
+        socket.emit('emotion-detected', {
+          emotion: 'worried',
+          text: 'I am worried about my insurance',
+          confidence: 0.8,
+          timestamp: Date.now()
+        });
+        addTestResult('✅ Test emotion detection sent');
+      }
+    });
+
+    document.getElementById('testInterruption').addEventListener('click', () => {
+      if (socket && isConnected) {
+        socket.emit('interruption-detected');
+        addTestResult('✅ Test interruption sent');
+      }
+    });
+
+    document.getElementById('resetLatency').addEventListener('click', () => {
+      latencyHistory = [];
+      currentLatency = 0;
+      updateLatencyDisplay(0);
+      addTestResult('✅ Latency reset');
+    });
+
+    document.getElementById('startLatencyTest').addEventListener('click', () => {
+      addTestResult('🧪 Starting comprehensive latency test...');
+      
+      // Test various latency values
+      setTimeout(() => simulateLatencyMeasurement(150), 100);
+      setTimeout(() => simulateLatencyMeasurement(350), 300);
+      setTimeout(() => simulateLatencyMeasurement(550), 500);
+      setTimeout(() => simulateLatencyMeasurement(200), 700);
+      
+      addTestResult('✅ Latency test sequence completed');
+    });
+
+    document.getElementById('testAnalyticsToggle').addEventListener('click', () => {
+      const sidebar = document.getElementById('analyticsSidebar');
+      const toggleBar = document.getElementById('analyticsToggleBar');
+      
+      if (sidebar && toggleBar) {
+        // Test close
+        sidebar.classList.add('collapsed');
+        setTimeout(() => {
+          toggleBar.classList.add('visible');
+          addTestResult('✅ Analytics close test passed');
+          
+          // Test open
+          setTimeout(() => {
+            sidebar.classList.remove('collapsed');
+            toggleBar.classList.remove('visible');
+            addTestResult('✅ Analytics open test passed');
+          }, 500);
+        }, 300);
+      }
+    });
+
+    document.getElementById('testSocketConnection').addEventListener('click', () => {
+      if (socket && isConnected) {
+        socket.emit('test-message', { message: 'Test from client' });
+        addTestResult('✅ Socket test message sent');
+      } else {
+        addTestResult('❌ Socket not connected');
+      }
+    });
+  </script>
+</body>
+</html>

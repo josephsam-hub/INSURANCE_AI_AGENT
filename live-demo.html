@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Live Analytics Demo - InsureBot Pulse</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Left-Side Analytics Dashboard -->
+  <div class="analytics-sidebar" id="analyticsSidebar">
+    <div class="sidebar-header">
+      <h3><i class="fas fa-brain"></i> Live Call Analytics</h3>
+      <div class="call-status" id="callStatus">
+        <span class="status-dot active"></span>
+        <span class="status-text">Live Demo</span>
+      </div>
+    </div>
+    
+    <div class="sidebar-content">
+      <!-- Real-time Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">📊</div>
+          <div class="metric-info">
+            <span class="metric-label">Latency</span>
+            <span class="metric-value" id="latencyValue">245ms</span>
+          </div>
+          <div class="metric-status" id="latencyStatus">🟢</div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-icon">😊</div>
+          <div class="metric-info">
+            <span class="metric-label">Emotion</span>
+            <span class="metric-value" id="emotionValue">Happy</span>
+          </div>
+          <div class="metric-status" id="emotionStatus">🟡</div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-icon">🎚️</div>
+          <div class="metric-info">
+            <span class="metric-label">Empathy</span>
+            <span class="metric-value" id="empathyValue">85%</span>
+          </div>
+          <div class="metric-status" id="empathyStatus">🟢</div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-icon">🛑</div>
+          <div class="metric-info">
+            <span class="metric-label">Interruptions</span>
+            <span class="metric-value" id="interruptionsValue">5</span>
+          </div>
+          <div class="metric-status" id="interruptionsStatus">🟡</div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <!-- Emotion Timeline Chart -->
+        <div class="chart-container">
+          <h4><i class="fas fa-chart-line"></i> Emotion Timeline</h4>
+          <canvas id="emotionChart" width="300" height="150"></canvas>
+        </div>
+        
+        <!-- Interruption Heatmap -->
+        <div class="chart-container">
+          <h4><i class="fas fa-fire"></i> Interruption Heatmap</h4>
+          <canvas id="interruptionChart" width="300" height="150"></canvas>
+        </div>
+        
+        <!-- Empathy Gauge -->
+        <div class="chart-container">
+          <h4><i class="fas fa-heart"></i> Empathy Score</h4>
+          <canvas id="empathyChart" width="300" height="150"></canvas>
+        </div>
+      </div>
+
+      <!-- Call Flow Timeline -->
+      <div class="timeline-section">
+        <h4><i class="fas fa-clock"></i> Call Flow</h4>
+        <div class="timeline-container" id="timelineContainer">
+          <div class="timeline-item">
+            <div class="timeline-dot user"></div>
+            <div class="timeline-content">
+              <span class="speaker">User</span>
+              <span class="message">Demo started</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content" id="mainContent">
+    <header>
+      <div class="container header-group">
+        <img src="https://www.valuenable.in/images/logo.png" alt="ValuEnable Logo" class="logo" />
+        <div>
+          <h1>Live Analytics Demo</h1>
+          <p class="subtitle">All Three Visualizations Working Together</p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="ai-hero">
+        <div class="visual-zone">
+          <div class="bloom-sphere">
+            <canvas id="bloomCanvas"></canvas>
+            <div class="mic-shadow">
+              <button id="startDemoBtn" aria-label="Start Live Demo">
+                <i class="fas fa-play"></i>
+                <span>Start Live Demo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="bot-desc">
+          <h2>Live Analytics Dashboard</h2>
+          <p>Watch all three visualizations update in real-time:</p>
+          <ul>
+            <li><strong>Emotion Timeline:</strong> Shows user sentiment over time</li>
+            <li><strong>Interruption Heatmap:</strong> Tracks when users interrupt the AI</li>
+            <li><strong>Empathy Score:</strong> Measures AI's empathetic responses</li>
+          </ul>
+          <div id="demoStatus">Click "Start Live Demo" to begin</div>
+        </div>
+      </section>
+    </main>
+
+    <footer> &copy; 2025 ValuEnable. All rights reserved. </footer>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    let demoInterval;
+    let isDemoRunning = false;
+    
+    // Start live demo
+    document.getElementById('startDemoBtn').addEventListener('click', () => {
+      if (isDemoRunning) {
+        stopDemo();
+      } else {
+        startDemo();
+      }
+    });
+    
+    function startDemo() {
+      isDemoRunning = true;
+      const btn = document.getElementById('startDemoBtn');
+      const status = document.getElementById('demoStatus');
+      
+      btn.innerHTML = '<i class="fas fa-stop"></i><span>Stop Demo</span>';
+      status.innerHTML = '<h3>🎉 Live Demo Running!</h3><p>Watch the charts update every 3 seconds...</p>';
+      
+      // Initialize with some data
+      updateEmotionChart('happy');
+      updateEmotionChart('neutral');
+      updateEmotionChart('worried');
+      
+      // Add timeline items
+      addTimelineItem('User', 'Hello, I need insurance help');
+      addTimelineItem('AI', 'I understand. How can I assist you today?');
+      addTimelineItem('User', 'I\'m worried about my coverage');
+      addTimelineItem('AI', 'I care about your concerns. Let me help.');
+      
+      // Start continuous updates
+      demoInterval = setInterval(() => {
+        // Random emotion changes
+        const emotions = ['happy', 'neutral', 'worried', 'angry'];
+        const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+        updateEmotionChart(randomEmotion);
+        
+        // Update emotion display
+        const emotionValue = document.getElementById('emotionValue');
+        if (emotionValue) {
+          emotionValue.textContent = randomEmotion.charAt(0).toUpperCase() + randomEmotion.slice(1);
+        }
+        
+        // Random interruptions
+        if (Math.random() > 0.7) {
+          updateInterruptionChart();
+          addTimelineItem('User', 'Sorry, let me interrupt...');
+        }
+        
+        // Random empathy score
+        if (empathyChart && Math.random() > 0.5) {
+          const newScore = Math.floor(Math.random() * 40) + 60; // 60-100 range
+          empathyChart.data.datasets[0].data = [newScore, 100 - newScore];
+          empathyChart.update('none');
+          
+          const empathyValue = document.getElementById('empathyValue');
+          if (empathyValue) empathyValue.textContent = `${newScore}%`;
+        }
+        
+        // Random latency
+        const latencyValue = document.getElementById('latencyValue');
+        if (latencyValue) {
+          const latency = Math.floor(Math.random() * 500) + 100; // 100-600ms
+          latencyValue.textContent = `${latency}ms`;
+        }
+        
+        // Add random conversation items
+        if (Math.random() > 0.8) {
+          const messages = [
+            'Can you explain my policy?',
+            'I understand your policy covers...',
+            'What about deductibles?',
+            'Your deductible is $500...',
+            'That sounds expensive',
+            'I understand your concern about costs...'
+          ];
+          const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+          const speaker = Math.random() > 0.5 ? 'User' : 'AI';
+          addTimelineItem(speaker, randomMessage);
+        }
+        
+      }, 3000); // Update every 3 seconds
+    }
+    
+    function stopDemo() {
+      isDemoRunning = false;
+      const btn = document.getElementById('startDemoBtn');
+      const status = document.getElementById('demoStatus');
+      
+      btn.innerHTML = '<i class="fas fa-play"></i><span>Start Live Demo</span>';
+      status.innerHTML = '<h3>Demo Stopped</h3><p>Click "Start Live Demo" to begin again</p>';
+      
+      if (demoInterval) {
+        clearInterval(demoInterval);
+      }
+    }
+  </script>
+</body>
+</html> 

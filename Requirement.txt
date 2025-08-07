@@ -1,0 +1,32 @@
+Core AI & LLMs
+openai>=1.2.0
+langchain>=0.1.16
+faiss-cpu>=1.7.4
+tiktoken
+
+Transcription
+deepgram-sdk>=3.0.9
+
+Voice Generation
+elevenlabs>=0.2.26
+
+Backend Server
+fastapi
+uvicorn
+
+PDF/Text Parsing (optional)
+PyPDF2
+python-docx
+
+Environment Variable Support
+python-dotenv
+
+HTTP Requests
+requests
+httpx
+
+To use this:
+
+Save the above text in a file named requirements.txt.
+
+Then install all dependencies by running
